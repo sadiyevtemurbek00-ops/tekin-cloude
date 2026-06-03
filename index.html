@@ -2487,10 +2487,11 @@ function exportPDF(){
     // Header
     doc.setFillColor(11,20,38); doc.rect(0,0,210,40,"F");
     doc.setFillColor(26,111,244); doc.rect(0,37,210,3,"F");
+    try{ doc.addImage(LOGO,"JPEG",12,8,24,24); }catch(e){}
     doc.setTextColor(255,255,255); doc.setFontSize(16); doc.setFont("helvetica","bold");
-    doc.text("ALC O'quv Markazi — S.T. Biologiya",14,17);
+    doc.text("ALC O'quv Markazi — S.T. Biologiya",42,17);
     doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(150,170,200);
-    doc.text("Biologiya AI Tizimi — Sessiya Hisoboti",14,27);
+    doc.text("Biologiya AI Tizimi — Sessiya Hisoboti",42,27);
     doc.setTextColor(150,170,200); doc.setFontSize(8);
     doc.text(today,195,10,{align:"right"});
 
@@ -3468,8 +3469,10 @@ async function sendStudentsReport(type){
 function buildStudentsExcel(students, title){
   if(!window.XLSX){ throw new Error("Excel kutubxonasi yuklanmadi"); }
   var rows=[];
+  var teacher = localStorage.getItem("alc_teacher_name") || "Sadiyev Temurbek";
   rows.push(["ALC O'quv Markazi — Biologiya AI Tizimi"]);
   rows.push([title+" — Hisobot", "", "Sana:", new Date().toLocaleDateString("uz-UZ")]);
+  rows.push(["O'qituvchi:", teacher]);
   rows.push([]);
   rows.push(["#","O'quvchi","Guruh","Sinf","Sessiyalar","O'rtacha %","Yulduz","Baho","Oxirgi"]);
   students.forEach(function(s, i){
@@ -3494,12 +3497,16 @@ function buildStudentsPDF(students, title){
   var jsPDF=window.jspdf.jsPDF;
   var doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
   var today=new Date().toLocaleDateString("uz-UZ");
+  var teacher=localStorage.getItem("alc_teacher_name") || "Sadiyev Temurbek";
   doc.setFillColor(11,20,38); doc.rect(0,0,210,40,"F");
   doc.setFillColor(26,111,244); doc.rect(0,37,210,3,"F");
+  try{ doc.addImage(LOGO,"JPEG",12,8,24,24); }catch(e){}
   doc.setTextColor(255,255,255); doc.setFontSize(16); doc.setFont("helvetica","bold");
-  doc.text("ALC O'quv Markazi — Biologiya",14,17);
+  doc.text("ALC O'quv Markazi — Biologiya",42,16);
   doc.setFontSize(10); doc.setFont("helvetica","normal"); doc.setTextColor(150,170,200);
-  doc.text(title+" — O'quvchilar hisoboti",14,27);
+  doc.text(title+" — O'quvchilar hisoboti",42,25);
+  doc.setFontSize(8.5); doc.setTextColor(150,170,200);
+  doc.text("O'qituvchi: "+teacher,42,33);
   doc.setFontSize(8); doc.text(today,195,10,{align:"right"});
   var y=52;
   doc.setFillColor(26,111,244); doc.rect(10,y-6,190,9,"F");
@@ -3883,9 +3890,11 @@ function getCurrentTestData(){
 function buildTestExcel(data, title){
   if(!window.XLSX){ throw new Error("Excel kutubxonasi yuklanmadi"); }
   var aoa = [];
+  var teacher = localStorage.getItem("alc_teacher_name") || "Sadiyev Temurbek";
   aoa.push(["ALC O'quv Markazi — Biologiya AI Tizimi"]);
   aoa.push(["Test natijalari hisoboti"]);
   aoa.push(["Mavzu:", data.topic||"-", "Sana:", data.date||"-", "Guruh:", title]);
+  aoa.push(["O'qituvchi:", teacher]);
   aoa.push([]);
   aoa.push(["#","O'quvchi","Guruh","Ochiq (got)","Ochiq (jami)","Yozma (got)","Yozma (jami)","Jami","Foiz %","Baho"]);
   data.rows.forEach(function(r,i){
@@ -3909,12 +3918,16 @@ function buildTestExcel(data, title){
 function buildTestPDF(data, title){
   var jsPDF = window.jspdf.jsPDF;
   var doc = new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+  var teacher = localStorage.getItem("alc_teacher_name") || "Sadiyev Temurbek";
   doc.setFillColor(11,20,38); doc.rect(0,0,210,40,"F");
   doc.setFillColor(16,185,129); doc.rect(0,37,210,3,"F");
+  try{ doc.addImage(LOGO,"JPEG",12,8,24,24); }catch(e){}
   doc.setTextColor(255,255,255); doc.setFontSize(16); doc.setFont("helvetica","bold");
-  doc.text("ALC O'quv Markazi — Biologiya",14,17);
+  doc.text("ALC O'quv Markazi — Biologiya",42,16);
   doc.setFontSize(10); doc.setFont("helvetica","normal"); doc.setTextColor(150,170,200);
-  doc.text("Test natijalari — "+title,14,27);
+  doc.text("Test natijalari — "+title,42,25);
+  doc.setFontSize(8.5); doc.setTextColor(150,170,200);
+  doc.text("O'qituvchi: "+teacher,42,33);
   doc.setFontSize(8); doc.text((data.date||""),195,10,{align:"right"});
   // Info qatori
   doc.setTextColor(30,30,30); doc.setFillColor(248,250,252); doc.rect(10,46,190,14,"F");
