@@ -51,6 +51,49 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
+/* ====== REALISTIK BIOLOGIK XIRA FON (watermark) — oq fon saqlangan ====== */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='620' height='620' viewBox='0 0 620 620'><g fill='none' stroke-width='2.4' stroke-linecap='round'><g stroke='%231A6FF4'><path d='M70,40 C112,72 112,112 70,144 C28,176 28,216 70,248'/><path d='M112,40 C70,72 70,112 112,144 C154,176 154,216 112,248'/><line x1='78' y1='58' x2='104' y2='58'/><line x1='84' y1='92' x2='98' y2='92'/><line x1='78' y1='126' x2='104' y2='126'/><line x1='78' y1='162' x2='104' y2='162'/><line x1='84' y1='196' x2='98' y2='196'/><line x1='78' y1='230' x2='104' y2='230'/></g><g stroke='%2306B6D4'><polygon points='470,90 510,113 510,159 470,182 430,159 430,113'/><circle cx='470' cy='90' r='6' fill='%2306B6D4'/><circle cx='510' cy='113' r='6' fill='%2306B6D4'/><circle cx='510' cy='159' r='6' fill='%2306B6D4'/><circle cx='470' cy='182' r='6' fill='%2306B6D4'/><circle cx='430' cy='159' r='6' fill='%2306B6D4'/><circle cx='430' cy='113' r='6' fill='%2306B6D4'/><line x1='470' y1='182' x2='470' y2='220'/><circle cx='470' cy='232' r='8' fill='%2306B6D4'/></g><g stroke='%2310B981'><circle cx='150' cy='440' r='74'/><circle cx='150' cy='440' r='27'/><circle cx='124' cy='410' r='9'/><circle cx='186' cy='466' r='11'/><circle cx='178' cy='408' r='6'/></g><g stroke='%2310B981'><path d='M390,500 C390,414 474,372 540,372 C540,458 456,500 390,500 Z'/><path d='M404,490 C448,448 498,418 532,384'/><path d='M430,492 L452,452 M468,488 L486,456'/></g><g stroke='%23F59E0B'><circle cx='300' cy='300' r='5' fill='%23F59E0B'/><circle cx='340' cy='280' r='5' fill='%23F59E0B'/><circle cx='320' cy='340' r='5' fill='%23F59E0B'/><line x1='305' y1='298' x2='335' y2='283'/><line x1='338' y1='285' x2='322' y2='335'/><line x1='316' y1='338' x2='303' y2='305'/></g></g></svg>");
+  background-repeat: repeat; background-size: 620px 620px;
+  opacity: .065;
+}
+.shell { position: relative; z-index: 1; }
+
+/* Realistik gradient ikonka badge (biologik) */
+.bio-ic {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  box-shadow: 0 4px 12px rgba(26,111,244,.28), inset 0 1px 1px rgba(255,255,255,.4);
+  color: #fff;
+}
+.bio-ic svg { width: 24px; height: 24px; display: block; }
+.bio-ic-green { background: linear-gradient(135deg, var(--green), #34D399); box-shadow: 0 4px 12px rgba(16,185,129,.28), inset 0 1px 1px rgba(255,255,255,.4); }
+.bio-ic-amber { background: linear-gradient(135deg, var(--amber), #FBBF24); box-shadow: 0 4px 12px rgba(245,158,11,.28), inset 0 1px 1px rgba(255,255,255,.4); }
+.bio-ic-cyan { background: linear-gradient(135deg, var(--cyan), #22D3EE); box-shadow: 0 4px 12px rgba(6,182,212,.28), inset 0 1px 1px rgba(255,255,255,.4); }
+.bio-ic-red { background: linear-gradient(135deg, var(--red), #F87171); box-shadow: 0 4px 12px rgba(239,68,68,.28), inset 0 1px 1px rgba(255,255,255,.4); }
+.bio-ic-sm { width: 34px; height: 34px; border-radius: 10px; }
+.bio-ic-sm svg { width: 19px; height: 19px; }
+
+/* Realistik stat-card: yuqori rangli accent + ko'tarilgan soyalar */
+.stat-card { position: relative; overflow: hidden; transition: transform .18s ease, box-shadow .18s ease; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--sh2); }
+.stat-card::after {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
+}
+.stat-icon-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 11px; margin-bottom: 10px;
+  background: linear-gradient(135deg, rgba(26,111,244,.12), rgba(6,182,212,.12));
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.6);
+}
+.stat-icon-badge svg { width: 22px; height: 22px; }
+
+/* Kartalarni biroz realistikroq (yumshoq gradient yuza) */
+.card { background: linear-gradient(180deg, #FFFFFF, #FCFDFF); }
+
 /* LAYOUT */
 .shell { display: flex; min-height: 100vh; }
 
@@ -165,7 +208,21 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--tex
 }
 .stat-val { font-family: 'Space Grotesk', sans-serif; font-size: 26px; font-weight: 700; }
 .stat-lbl { font-size: 12px; color: var(--text3); margin-top: 3px; font-weight: 500; }
-.stat-icon { font-size: 22px; margin-bottom: 8px; }
+.stat-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; border-radius: 12px; font-size: 22px; margin-bottom: 10px;
+  background: linear-gradient(135deg, rgba(26,111,244,.13), rgba(6,182,212,.16));
+  box-shadow: inset 0 1px 2px rgba(255,255,255,.75), 0 3px 9px rgba(15,23,42,.07);
+}
+
+/* Sidebar — biologik xira tekstura (navy fon ustida) */
+.sb::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='420' viewBox='0 0 240 420'><g fill='none' stroke='%23FFFFFF' stroke-width='2' stroke-linecap='round'><path d='M60,30 C100,62 100,102 60,134 C20,166 20,206 60,238 C100,270 100,310 60,342'/><path d='M100,30 C60,62 60,102 100,134 C140,166 140,206 100,238 C60,270 60,310 100,342'/><line x1='68' y1='48' x2='92' y2='48'/><line x1='74' y1='82' x2='86' y2='82'/><line x1='68' y1='116' x2='92' y2='116'/><line x1='68' y1='152' x2='92' y2='152'/><line x1='74' y1='186' x2='86' y2='186'/><line x1='68' y1='220' x2='92' y2='220'/><line x1='68' y1='256' x2='92' y2='256'/><line x1='74' y1='290' x2='86' y2='290'/><line x1='68' y1='324' x2='92' y2='324'/></g></svg>");
+  background-repeat: no-repeat; background-position: right -40px top 80px; background-size: 220px auto;
+  opacity: .05;
+}
+.sb-head, .sb-nav, .sb-foot { position: relative; z-index: 1; }
 
 /* BADGE */
 .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
@@ -1100,6 +1157,12 @@ label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; 
         </button>
         <button class="btn btn-secondary" onclick="sendTestResults('both')">
           📨 Ikkalasini yuborish
+        </button>
+        <button class="btn btn-secondary" onclick="sendTestReport('excel')">
+          📊 Excel botga
+        </button>
+        <button class="btn btn-secondary" onclick="sendTestReport('pdf')">
+          📄 PDF botga
         </button>
         <button class="btn btn-primary" onclick="saveTestResults()">
           💾 Saqlash
@@ -3785,6 +3848,155 @@ async function sendTestResults(type){
     toast(sent + " ta ota-onaga " + typeLabel + " natijasi yuborildi!");
   } else {
     toast("Yuborish uchun natija kiriting yoki ota-ona ID lari sozlang!");
+  }
+}
+
+// ── TEST NATIJALARINI EXCEL/PDF BOTGA YUBORISH ────────────
+// Joriy jadvaldagi natijalarni o'qib, tuzilgan ma'lumot qaytaradi
+function getCurrentTestData(){
+  var date = el("TEST-DATE") ? el("TEST-DATE").value : "";
+  var topic = el("TEST-TOPIC") ? el("TEST-TOPIC").value.trim() : "";
+  var rows = [];
+  document.querySelectorAll(".test-row").forEach(function(row){
+    var sid = row.getAttribute("data-sid");
+    var stu = APP.students.find(function(s){ return String(s.id)===String(sid); });
+    if(!stu) return;
+    var oGot = parseInt(row.querySelector(".t-open-got").value)||0;
+    var oTot = parseInt(row.querySelector(".t-open-total").value)||100;
+    var wGot = parseInt(row.querySelector(".t-wr-got").value)||0;
+    var wTot = parseInt(row.querySelector(".t-wr-total").value)||50;
+    if(oGot===0 && wGot===0) return; // natija kiritilmagan o'quvchini tashlab ketamiz
+    var total = oTot + wTot;
+    var got = oGot + wGot;
+    var pct = total>0 ? Math.round(got/total*100) : 0;
+    var grade = pct>=86?"Ajoyib":pct>=70?"Yaxshi":pct>=50?"Qoniqarli":"Qoniqarsiz";
+    rows.push({
+      name: stu.name, group: getGroupName(stu.groupId),
+      oGot:oGot, oTot:oTot, wGot:wGot, wTot:wTot,
+      total:total, got:got, pct:pct, grade:grade
+    });
+  });
+  rows.sort(function(a,b){ return b.pct - a.pct; });
+  return { date:date, topic:topic, rows:rows };
+}
+
+function buildTestExcel(data, title){
+  if(!window.XLSX){ throw new Error("Excel kutubxonasi yuklanmadi"); }
+  var aoa = [];
+  aoa.push(["ALC O'quv Markazi — Biologiya AI Tizimi"]);
+  aoa.push(["Test natijalari hisoboti"]);
+  aoa.push(["Mavzu:", data.topic||"-", "Sana:", data.date||"-", "Guruh:", title]);
+  aoa.push([]);
+  aoa.push(["#","O'quvchi","Guruh","Ochiq (got)","Ochiq (jami)","Yozma (got)","Yozma (jami)","Jami","Foiz %","Baho"]);
+  data.rows.forEach(function(r,i){
+    aoa.push([i+1, r.name, r.group, r.oGot, r.oTot, r.wGot, r.wTot, r.got+"/"+r.total, r.pct, r.grade]);
+  });
+  aoa.push([]);
+  var pcts = data.rows.map(function(r){ return r.pct; });
+  var avg = pcts.length?Math.round(pcts.reduce(function(a,b){return a+b;},0)/pcts.length):0;
+  aoa.push(["O'quvchilar soni:", data.rows.length]);
+  aoa.push(["O'rtacha foiz:", avg+"%"]);
+  aoa.push(["Eng yuqori:", pcts.length?Math.max.apply(null,pcts)+"%":"-"]);
+  aoa.push(["Eng past:", pcts.length?Math.min.apply(null,pcts)+"%":"-"]);
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"]=[{wch:4},{wch:24},{wch:16},{wch:11},{wch:12},{wch:11},{wch:12},{wch:10},{wch:9},{wch:12}];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Test natijalari");
+  var out = XLSX.write(wb, {bookType:"xlsx", type:"array"});
+  return new Blob([out], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+}
+
+function buildTestPDF(data, title){
+  var jsPDF = window.jspdf.jsPDF;
+  var doc = new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+  doc.setFillColor(11,20,38); doc.rect(0,0,210,40,"F");
+  doc.setFillColor(16,185,129); doc.rect(0,37,210,3,"F");
+  doc.setTextColor(255,255,255); doc.setFontSize(16); doc.setFont("helvetica","bold");
+  doc.text("ALC O'quv Markazi — Biologiya",14,17);
+  doc.setFontSize(10); doc.setFont("helvetica","normal"); doc.setTextColor(150,170,200);
+  doc.text("Test natijalari — "+title,14,27);
+  doc.setFontSize(8); doc.text((data.date||""),195,10,{align:"right"});
+  // Info qatori
+  doc.setTextColor(30,30,30); doc.setFillColor(248,250,252); doc.rect(10,46,190,14,"F");
+  doc.setDrawColor(226,232,240); doc.rect(10,46,190,14,"S");
+  doc.setFontSize(9); doc.setFont("helvetica","bold");
+  doc.text("Mavzu: "+(data.topic||"-"),14,55);
+  doc.text("Sana: "+(data.date||"-"),120,55);
+  // Jadval sarlavhasi
+  var y=70;
+  doc.setFillColor(16,185,129); doc.rect(10,y-6,190,9,"F");
+  doc.setTextColor(255,255,255); doc.setFontSize(8.5); doc.setFont("helvetica","bold");
+  doc.text("#",13,y); doc.text("O'quvchi",19,y); doc.text("Guruh",70,y);
+  doc.text("Ochiq",108,y); doc.text("Yozma",130,y); doc.text("Jami",153,y); doc.text("%",173,y); doc.text("Baho",182,y);
+  y+=8;
+  doc.setFont("helvetica","normal");
+  data.rows.forEach(function(r,i){
+    if(y>275){ doc.addPage(); y=20; }
+    if(i%2===0){ doc.setFillColor(244,247,251); doc.rect(10,y-5,190,8,"F"); }
+    var col=r.pct>=86?[16,185,129]:r.pct>=70?[245,158,11]:[239,68,68];
+    doc.setTextColor(30,30,30); doc.setFontSize(8.5);
+    doc.text(String(i+1),13,y);
+    doc.text(doc.splitTextToSize(r.name,48)[0],19,y);
+    doc.text(doc.splitTextToSize(r.group,36)[0],70,y);
+    doc.text(r.oGot+"/"+r.oTot,108,y);
+    doc.text(r.wGot+"/"+r.wTot,130,y);
+    doc.text(r.got+"/"+r.total,153,y);
+    doc.setTextColor(col[0],col[1],col[2]); doc.setFont("helvetica","bold");
+    doc.text(r.pct+"%",171,y);
+    doc.setTextColor(30,30,30); doc.setFont("helvetica","normal");
+    doc.text(r.grade,182,y);
+    y+=8;
+  });
+  // Xulosa
+  y+=4; if(y>250){ doc.addPage(); y=20; }
+  var pcts=data.rows.map(function(r){return r.pct;});
+  var avg=pcts.length?Math.round(pcts.reduce(function(a,b){return a+b;},0)/pcts.length):0;
+  doc.setFillColor(248,250,252); doc.rect(10,y,190,26,"F"); doc.setDrawColor(226,232,240); doc.rect(10,y,190,26,"S");
+  doc.setTextColor(30,30,30); doc.setFontSize(11); doc.setFont("helvetica","bold");
+  doc.text("Xulosa",14,y+8);
+  doc.setFontSize(9); doc.setFont("helvetica","normal");
+  doc.text("O'quvchilar: "+data.rows.length,14,y+16);
+  doc.text("O'rtacha: "+avg+"%",70,y+16);
+  doc.text("Eng yuqori: "+(pcts.length?Math.max.apply(null,pcts):0)+"%",120,y+16);
+  doc.text("Eng past: "+(pcts.length?Math.min.apply(null,pcts):0)+"%",14,y+22);
+  var pc=doc.getNumberOfPages();
+  for(var p=1;p<=pc;p++){
+    doc.setPage(p); doc.setFillColor(11,20,38); doc.rect(0,286,210,11,"F");
+    doc.setTextColor(100,116,139); doc.setFontSize(7);
+    doc.text("ALC O'quv Markazi — Biologiya AI Tizimi",10,292);
+    doc.text(p+" / "+pc,200,292,{align:"right"});
+  }
+  return doc.output("blob");
+}
+
+async function sendTestReport(type){
+  var token=getTgToken();
+  if(!token){ toast("Avval Ota-onalar bo'limida Bot Token saqlang!"); go("parents"); return; }
+  var chatId=getReportChatId();
+  if(!chatId){ toast("Ota-onalar bo'limida 'Hisobot uchun Chat ID' ni kiriting!"); go("parents"); return; }
+  var data=getCurrentTestData();
+  if(!data.date){ toast("Sanani kiriting!"); return; }
+  if(!data.topic){ toast("Mavzuni kiriting!"); return; }
+  if(!data.rows.length){ toast("Avval o'quvchilar natijalarini kiriting!"); return; }
+  toast("Test hisoboti tayyorlanmoqda...");
+  try{
+    var title=reportTitle(); // joriy guruh filtridan emas — test hammasi uchun; "Barcha o'quvchilar"
+    var blob, fname;
+    var dateStr=(data.date||new Date().toISOString().split("T")[0]).replace(/[^0-9]/g,"-");
+    if(type==="excel"){
+      blob=buildTestExcel(data, "Barcha o'quvchilar");
+      fname="ALC_Test_"+dateStr+".xlsx";
+    } else {
+      blob=buildTestPDF(data, "Barcha o'quvchilar");
+      fname="ALC_Test_"+dateStr+".pdf";
+    }
+    var pcts=data.rows.map(function(r){return r.pct;});
+    var avg=pcts.length?Math.round(pcts.reduce(function(a,b){return a+b;},0)/pcts.length):0;
+    var caption="📝 ALC Biologiya — Test natijalari\n📚 Mavzu: "+data.topic+"\n📅 Sana: "+data.date+"\n👥 O'quvchilar: "+data.rows.length+"\n⭐ O'rtacha: "+avg+"%";
+    await sendTgDocument(chatId, blob, fname, caption);
+  } catch(e){
+    console.error(e);
+    toast("Hisobot xatosi: "+e.message);
   }
 }
 
