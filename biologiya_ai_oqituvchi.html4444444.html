@@ -3837,12 +3837,13 @@ loadStudents();
 loadLibrary();
 initQA(); renderStudents(); renderVids("all");
 
-// ── KICHIK HAYVON ANIMATSIYALARI ──────────────────────────
+// ── KICHIK HAYVON ANIMATSIYALARI (xilma-xil harakat) ──────
 (function(){
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   var box = document.getElementById('CRITTERS');
-  if (!box || !box.animate && !document.createElement('div').animate) {}
-  var ANIMALS = ['🐛','🦋','🐞','🐝','🐢','🐸','🦎','🐌','🦔','🐰','🐿️','🐹','🐦','🐥','🦗','🐭','🐱','🐶'];
+  if (!box) return;
+  var ANIMALS = ['🐛','🦋','🐞','🐝','🐢','🐸','🦎','🐌','🦔','🐰','🐿️','🐹','🐦','🐥','🦗','🐭','🐱','🐶','🐤','🦆','🐠','🐞'];
+  var FLYERS = ['🦋','🐝','🐦','🐥','🦆','🐤'];
   function rnd(a,b){ return a + Math.random()*(b-a); }
   function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   function makeEl(emoji, size){
@@ -3853,53 +3854,90 @@ initQA(); renderStudents(); renderVids("all");
     box.appendChild(el);
     return el;
   }
-  // Ilova oynasi oldidan o'tib ketadi (chap<->o'ng)
-  function cross(emoji){
-    var vw = window.innerWidth, vh = window.innerHeight;
-    var size = rnd(30,46);
-    var el = makeEl(emoji, size);
-    var dir = Math.random() < .5 ? 1 : -1;
-    var y = rnd(vh*0.5, vh*0.88);
-    var startX = dir===1 ? -70 : vw+70;
-    var endX   = dir===1 ? vw+70 : -70;
-    var flip = dir===1 ? -1 : 1;
-    var dur = rnd(7500, 12000);
-    var steps = 12, frames = [];
-    for (var i=0;i<=steps;i++){
-      var t = i/steps;
-      var x = startX + (endX-startX)*t;
-      var bob = Math.abs(Math.sin(t*Math.PI*steps)) * -7;
-      var rot = Math.sin(t*Math.PI*steps) * 7;
-      frames.push({ transform:'translate('+x+'px,'+(y+bob)+'px) scaleX('+flip+') rotate('+rot+'deg)' });
-    }
-    el.animate(frames, { duration:dur, easing:'linear' }).onfinish = function(){ el.remove(); };
+  function run(el, frames, dur, easing){
+    el.animate(frames, { duration:dur, easing:easing||'linear' }).onfinish = function(){ el.remove(); };
   }
-  // Chetdan chiqib qo'l silkitadi (tepa/past/yon)
+
+  // 1) Yurib o'tish (chayqalib)
+  function walkCross(emoji){
+    var vw=innerWidth, vh=innerHeight, size=rnd(30,46), el=makeEl(emoji,size);
+    var dir=Math.random()<.5?1:-1, y=rnd(vh*0.55,vh*0.9);
+    var sx=dir===1?-70:vw+70, ex=dir===1?vw+70:-70, flip=dir===1?-1:1;
+    var steps=14, frames=[];
+    for(var i=0;i<=steps;i++){ var t=i/steps, x=sx+(ex-sx)*t;
+      var bob=Math.abs(Math.sin(t*Math.PI*steps))*-6, rot=Math.sin(t*Math.PI*steps)*6;
+      frames.push({transform:'translate('+x+'px,'+(y+bob)+'px) scaleX('+flip+') rotate('+rot+'deg)'}); }
+    run(el,frames,rnd(8000,12000));
+  }
+  // 2) Sakrab o'tish (parabolik)
+  function hopCross(emoji){
+    var vw=innerWidth, vh=innerHeight, size=rnd(30,46), el=makeEl(emoji,size);
+    var dir=Math.random()<.5?1:-1, base=rnd(vh*0.6,vh*0.88);
+    var sx=dir===1?-70:vw+70, ex=dir===1?vw+70:-70, flip=dir===1?-1:1, hops=5;
+    var steps=40, frames=[];
+    for(var i=0;i<=steps;i++){ var t=i/steps, x=sx+(ex-sx)*t;
+      var hop=-Math.abs(Math.sin(t*Math.PI*hops))*rnd(40,70);
+      var rot=Math.sin(t*Math.PI*hops*2)*10;
+      frames.push({transform:'translate('+x+'px,'+(base+hop)+'px) scaleX('+flip+') rotate('+rot+'deg)'}); }
+    run(el,frames,rnd(7000,10000));
+  }
+  // 3) Uchib o'tish (to'lqinsimon)
+  function flyCross(emoji){
+    var vw=innerWidth, vh=innerHeight, size=rnd(28,44), el=makeEl(FLYERS.indexOf(emoji)>=0?emoji:pick(FLYERS),size);
+    var dir=Math.random()<.5?1:-1, base=rnd(vh*0.18,vh*0.55), amp=rnd(30,70);
+    var sx=dir===1?-70:vw+70, ex=dir===1?vw+70:-70, flip=dir===1?-1:1;
+    var steps=30, frames=[];
+    for(var i=0;i<=steps;i++){ var t=i/steps, x=sx+(ex-sx)*t;
+      var y=base+Math.sin(t*Math.PI*4)*amp, rot=Math.cos(t*Math.PI*4)*14;
+      frames.push({transform:'translate('+x+'px,'+y+'px) scaleX('+flip+') rotate('+rot+'deg)'}); }
+    run(el,frames,rnd(6500,9500),'ease-in-out');
+  }
+  // 4) Diagonal suzib o'tish (aylanib)
+  function diagonal(emoji){
+    var vw=innerWidth, vh=innerHeight, size=rnd(30,46), el=makeEl(emoji,size);
+    var fromLeft=Math.random()<.5;
+    var sx=fromLeft?-70:vw+70, ex=fromLeft?vw+70:-70;
+    var sy=rnd(-40,vh*0.3), ey=rnd(vh*0.6,vh+40);
+    var spins=(Math.random()<.5?1:-1)*rnd(1,3);
+    var steps=24, frames=[];
+    for(var i=0;i<=steps;i++){ var t=i/steps;
+      var x=sx+(ex-sx)*t, y=sy+(ey-sy)*t, rot=360*spins*t;
+      frames.push({transform:'translate('+x+'px,'+y+'px) rotate('+rot+'deg)'}); }
+    run(el,frames,rnd(8000,11000),'ease-in-out');
+  }
+  // 5) Zigzag tushish/chiqish
+  function zigzag(emoji){
+    var vw=innerWidth, vh=innerHeight, size=rnd(28,44), el=makeEl(emoji,size);
+    var baseX=rnd(vw*0.15,vw*0.85), down=Math.random()<.5;
+    var sy=down?-70:vh+70, ey=down?vh+70:-70, zig=rnd(60,120);
+    var steps=28, frames=[];
+    for(var i=0;i<=steps;i++){ var t=i/steps;
+      var y=sy+(ey-sy)*t, x=baseX+Math.sin(t*Math.PI*5)*zig, rot=Math.sin(t*Math.PI*5)*18;
+      frames.push({transform:'translate('+x+'px,'+y+'px) rotate('+rot+'deg)'}); }
+    run(el,frames,rnd(7000,10000),'ease-in-out');
+  }
+  // 6) Chetdan mo'ralab qo'l silkitish
   function peek(emoji){
-    var vw = window.innerWidth, vh = window.innerHeight;
-    var size = rnd(34,52);
-    var el = makeEl(emoji, size);
-    var edge = pick(['top','bottom','left','right']);
-    var hid, shown;
-    if (edge==='top'){ var xt=rnd(vw*0.1,vw*0.82); hid='translate('+xt+'px,-90px)'; shown='translate('+xt+'px,8px)'; }
-    else if (edge==='bottom'){ var xb=rnd(vw*0.1,vw*0.82); hid='translate('+xb+'px,'+(vh+90)+'px)'; shown='translate('+xb+'px,'+(vh-size-12)+'px)'; }
-    else if (edge==='left'){ var yl=rnd(vh*0.2,vh*0.78); hid='translate(-90px,'+yl+'px)'; shown='translate(10px,'+yl+'px)'; }
+    var vw=innerWidth, vh=innerHeight, size=rnd(34,52), el=makeEl(emoji,size);
+    var edge=pick(['top','bottom','left','right']), hid, shown;
+    if(edge==='top'){ var xt=rnd(vw*0.1,vw*0.82); hid='translate('+xt+'px,-90px)'; shown='translate('+xt+'px,8px)'; }
+    else if(edge==='bottom'){ var xb=rnd(vw*0.1,vw*0.82); hid='translate('+xb+'px,'+(vh+90)+'px)'; shown='translate('+xb+'px,'+(vh-size-12)+'px)'; }
+    else if(edge==='left'){ var yl=rnd(vh*0.2,vh*0.78); hid='translate(-90px,'+yl+'px)'; shown='translate(10px,'+yl+'px)'; }
     else { var yr=rnd(vh*0.2,vh*0.78); hid='translate('+(vw+90)+'px,'+yr+'px)'; shown='translate('+(vw-size-10)+'px,'+yr+'px)'; }
-    var frames = [
-      { transform: hid },
-      { transform: shown, offset:0.16 },
-      { transform: shown+' rotate(-18deg)', offset:0.32 },
-      { transform: shown+' rotate(15deg)', offset:0.46 },
-      { transform: shown+' rotate(-14deg)', offset:0.60 },
-      { transform: shown+' rotate(8deg)', offset:0.72 },
-      { transform: shown+' rotate(0deg)', offset:0.82 },
-      { transform: hid }
-    ];
-    el.animate(frames, { duration: rnd(4400,6000), easing:'ease-in-out' }).onfinish = function(){ el.remove(); };
+    var frames=[{transform:hid},{transform:shown,offset:0.16},
+      {transform:shown+' rotate(-18deg)',offset:0.32},{transform:shown+' rotate(15deg)',offset:0.46},
+      {transform:shown+' rotate(-14deg)',offset:0.60},{transform:shown+' rotate(8deg)',offset:0.72},
+      {transform:shown+' rotate(0deg)',offset:0.82},{transform:hid}];
+    run(el,frames,rnd(4400,6000),'ease-in-out');
   }
-  function spawn(){ (Math.random() < .55 ? cross : peek)(pick(ANIMALS)); }
-  function loop(){ spawn(); setTimeout(loop, rnd(8000, 15000)); }
-  setTimeout(loop, 3500);
+
+  var MOVES = [walkCross, hopCross, flyCross, diagonal, zigzag, peek];
+  function spawn(){ pick(MOVES)(pick(ANIMALS)); }
+
+  // Paydo bo'lish oralig'i: 8 daqiqa
+  var INTERVAL = 8 * 60 * 1000;
+  function loop(){ spawn(); setTimeout(loop, INTERVAL); }
+  setTimeout(loop, 8000); // birinchisi ~8s da (tekshirish uchun), keyin har 8 daqiqada
 })();
 </script>
 <!-- KICHIK HAYVON ANIMATSIYALARI -->
