@@ -843,6 +843,7 @@ body.dark .bg-deco span { opacity: .08; }
                 <span id="AI-ST">Tayyorlanmoqda...</span>
               </div>
             </div>
+            <button class="tts-btn" id="TTS-BTN" onclick="toggleTTS()" title="Ovoz">&#128266;</button>
           </div>
 
           <div class="q-card">
@@ -1520,7 +1521,7 @@ function toggleTheme(){
 
 // ── APP STATE ─────────────────────────────────────────────
 var APP = {
-  qs:[], qi:0, ok:0, no:0, active:false, sec:0, ti:null, tts:false, res:[],
+  qs:[], qi:0, ok:0, no:0, active:false, sec:0, ti:null, tts:true, res:[],
   students:[],
   library:[],
   vids:[
@@ -1676,6 +1677,7 @@ function loadQ(i){
   el("MIC-BOX").style.display = "none";
   hide("BTN-OK"); hide("BTN-NO"); hide("BTN-NX"); show("BTN-A");
   setAI("Savol oqulmoqda...", true);
+  if(APP.tts) speak(q.q);
   updProg();
 }
 
@@ -1685,6 +1687,7 @@ function showAnswer(){
   el("ANS-BOX").style.display = "block";
   hide("BTN-A"); show("BTN-OK"); show("BTN-NO");
   setAI("Javob oqulmoqda...", true);
+  if(APP.tts) speak(q.a);
 }
 
 function markResult(isOk){
@@ -1725,8 +1728,6 @@ function endSession(){
   renderResult(pct, tot);
   toast("Sessiya yakunlandi! Natija: "+pct+"%");
   go("results");
-  // Avtomatik ovozli hisobot (1 soniya kutib)
-  setTimeout(function(){ voiceReport(pct, tot, calcStars(pct)); }, 1200);
   // Ota-onaga Telegram xabar
   sendParentNotification(pct, tot);
 }
@@ -2437,14 +2438,7 @@ function renderResult(pct, tot){
     '<div class="result-grade">'+grade+'</div>'+
     '<div class="result-stars">'+starsHTML(stars)+'</div>'+
     '<div style="font-size:12px;color:rgba(255,255,255,.35);margin-top:10px">&#9200; '+tstr+' &nbsp;·&nbsp; '+APP.ok+' togri / '+APP.no+' notogri</div>';
-    heroInner.innerHTML += '<button onclick="stopVoiceReport()" style="margin-top:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px">&#9646;&#9646; Toxtatish</button>';
-  // Stop voice button
-  var stopBtn = document.createElement("button");
-  stopBtn.style.cssText = "margin-top:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-family:Inter,sans-serif";
-  stopBtn.textContent = "Ovozni toxtatish";
-  stopBtn.onclick = stopVoiceReport;
   hero.appendChild(heroInner);
-  hero.appendChild(stopBtn);
   cont.appendChild(hero);
 
   // Stats grid
@@ -2479,8 +2473,7 @@ function renderResult(pct, tot){
   var btns=document.createElement("div"); btns.style.cssText="display:flex;gap:9px;flex-wrap:wrap;margin-top:4px";
   var b1=document.createElement("button"); b1.className="btn btn-primary"; b1.innerHTML="&#9654; Yangi sessiya"; b1.onclick=function(){go("session");};
   var b2=document.createElement("button"); b2.className="btn btn-secondary"; b2.innerHTML="&#128196; PDF Hisobot"; b2.onclick=exportPDF;
-  var b3=document.createElement("button"); b3.className="btn btn-secondary"; b3.innerHTML="&#128266; Ovozli hisobot"; b3.id="VOICE-RPT-BTN"; b3.onclick=function(){ voiceReport(pct, tot, stars); };
-  btns.appendChild(b1); btns.appendChild(b2); btns.appendChild(b3); cont.appendChild(btns);
+  btns.appendChild(b1); btns.appendChild(b2); cont.appendChild(btns);
 }
 
 // ── PDF EXPORT ────────────────────────────────────────────
@@ -3931,10 +3924,10 @@ initQA(); renderStudents(); renderVids("all");
   var MOVES = [walkCross, hopCross, flyCross, diagonal, zigzag, peek];
   function spawn(){ pick(MOVES)(pick(ANIMALS)); }
 
-  // Paydo bo'lish oralig'i: 8 daqiqa
-  var INTERVAL = 8 * 60 * 1000;
+  // Paydo bo'lish oralig'i: 1 daqiqa
+  var INTERVAL = 1 * 60 * 1000;
   function loop(){ spawn(); setTimeout(loop, INTERVAL); }
-  setTimeout(loop, 8000); // birinchisi ~8s da (tekshirish uchun), keyin har 8 daqiqada
+  setTimeout(loop, 8000); // birinchisi ~8s da (tekshirish uchun), keyin har 1 daqiqada
 })();
 </script>
 <!-- KICHIK HAYVON ANIMATSIYALARI -->
