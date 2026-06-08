@@ -11,10 +11,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  /* Calm deep teal-green base for sidebar/dark panels */
-  --navy: #0E3A44;
-  --navy2: #114E5A;
-  --navy3: #0E5A66;
+  /* Deep dark-blue (navy) base for sidebar/dark panels — eski fondagidek */
+  --navy: #0B1426;
+  --navy2: #111D35;
+  --navy3: #16234A;
   /* Primary accent — calm blue-teal (biology + ko'kroq) */
   --blue: #0C8FA6;
   --blue2: #0A7185;
@@ -60,24 +60,24 @@
   --grad-fresh: linear-gradient(135deg, #0C8FA6 0%, #2DD4BF 100%);
   --grad-sky: linear-gradient(135deg, #38BDF8 0%, #3B82F6 100%);
   --grad-sun: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
-  --grad-sidebar: linear-gradient(165deg, #0E3A44 0%, #114E5A 50%, #0E5A66 100%);
+  --grad-sidebar: linear-gradient(165deg, #0B1426 0%, #111D35 50%, #16234A 100%);
 
-  --gray-50: #F7FAF8;
-  --gray-100: #EFF3F1;
-  --gray-200: #E3E9E6;
-  --gray-300: #CBD5D0;
-  --gray-400: #9CA8A2;
-  --gray-500: #6B7770;
-  --gray-600: #4B5751;
-  --gray-700: #3A453F;
-  --gray-800: #28322D;
-  --gray-900: #1A211D;
-  --text: #1F2933;
-  --text2: #3E4C59;
-  --text3: #7B8794;
-  --border: #E4EAE6;
+  --gray-50: #F8FAFC;
+  --gray-100: #F1F4F9;
+  --gray-200: #E5EAF1;
+  --gray-300: #CBD3DF;
+  --gray-400: #9AA6B6;
+  --gray-500: #6B7686;
+  --gray-600: #4B5666;
+  --gray-700: #3A4453;
+  --gray-800: #28303B;
+  --gray-900: #1A2029;
+  --text: #16233B;
+  --text2: #38465C;
+  --text3: #748098;
+  --border: #E5EAF2;
   --surface: #FFFFFF;
-  --bg: #F6F8F5;
+  --bg: #F3F6FB;
   --r: 14px;
   --r2: 9px;
   --sh: 0 1px 3px rgba(31,41,51,.06), 0 1px 2px rgba(31,41,51,.05);
@@ -88,8 +88,8 @@
 body {
   font-family: 'Inter', sans-serif; color: var(--text); min-height: 100vh;
   background:
-    radial-gradient(circle at 0% 0%, rgba(12,143,166,.07), transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(59,130,246,.06), transparent 42%),
+    radial-gradient(circle at 0% 0%, rgba(37,99,235,.07), transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(56,189,248,.06), transparent 42%),
     var(--bg);
   background-attachment: fixed;
   transition: background-color .3s ease, color .3s ease;
@@ -108,7 +108,7 @@ body {
 .sb.collapsed .ni-dot { display: none; }
 .sb.collapsed .sb-foot-name { display: none; }
 .sb.collapsed .sb-foot-sub { display: none; }
-.sb.collapsed .ni { justify-content: center; padding: 10px; }
+.sb.collapsed .ni { justify-content: center; padding: 10px; font-size: 0; gap: 0; }
 .sb.collapsed .ni-ic { width: auto; font-size: 20px; }
 .sb.collapsed .ni-ic svg { width: 22px; height: 22px; }
 .sb.collapsed .sb-head { justify-content: center; padding: 16px 10px; }
@@ -154,13 +154,13 @@ body {
 .sb-brand { }
 .sb-brand-name {
   font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700;
-  background: linear-gradient(90deg,#fff,#A7F3D0,#FCD9A0);
+  background: linear-gradient(90deg,#fff,#A7D8F3,#FCD9A0);
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
 .sb-brand-sub { font-size: 10px; color: rgba(167,243,208,.7); margin-top: 1px; }
 
 .sb-nav { flex: 1; padding: 12px 10px; overflow-y: auto; position: relative; z-index: 1; }
-.sb-section { font-size: 10px; font-weight: 700; color: rgba(110,231,183,.62); text-transform: uppercase; letter-spacing: .12em; padding: 0 8px; margin: 14px 0 4px; }
+.sb-section { font-size: 10px; font-weight: 700; color: rgba(125,211,252,.6); text-transform: uppercase; letter-spacing: .12em; padding: 0 8px; margin: 14px 0 4px; }
 .sb-section:first-child { margin-top: 4px; }
 
 .ni {
@@ -301,7 +301,7 @@ label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; 
 
 /* AI PANEL — dark scientific */
 .ai-panel {
-  background: linear-gradient(150deg, #103D34 0%, #14534A 45%, #1B4A52 78%, #1E3A4F 100%);
+  background: linear-gradient(150deg, #0B1426 0%, #122A4E 45%, #0F2746 78%, #0B1E3C 100%);
   border-radius: 18px; padding: 24px; color: #fff;
   position: relative; overflow: hidden; min-height: 420px;
   display: flex; flex-direction: column;
@@ -459,7 +459,7 @@ label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; 
 
 /* ============ RESULT ============ */
 .result-hero {
-  background: linear-gradient(150deg, #103D44 0%, #0C8FA6 50%, #14B8A6 100%);
+  background: linear-gradient(150deg, #0B1426 0%, #143A6E 52%, #0C8FA6 100%);
   border-radius: 18px; padding: 36px; text-align: center; color: #fff; margin-bottom: 18px;
   border: 1px solid rgba(56,189,248,.22); position: relative; overflow: hidden;
   box-shadow: 0 16px 44px rgba(16,61,52,.35);
@@ -639,17 +639,17 @@ label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; 
 
 /* ============ DARK MODE (tungi rejim — ko'zga yumshoq) ============ */
 body.dark {
-  --surface: #16242A;
-  --bg: #0E161A;
-  --text: #E4ECEF;
-  --text2: #BCC8CC;
-  --text3: #879298;
-  --border: #28363B;
-  --gray-50: #1C2A2E;
-  --gray-100: #212F34;
-  --gray-200: #2C3B40;
-  --gray-300: #3A4A50;
-  --blue-l: rgba(12,143,166,.20);
+  --surface: #13203B;
+  --bg: #0A1326;
+  --text: #E6ECF5;
+  --text2: #BCC6D8;
+  --text3: #8794AC;
+  --border: #243150;
+  --gray-50: #14213C;
+  --gray-100: #1A2747;
+  --gray-200: #243152;
+  --gray-300: #34426A;
+  --blue-l: rgba(12,143,166,.22);
   --green-l: rgba(22,163,74,.20);
   --cyan-l: rgba(59,130,246,.20);
   --amber-l: rgba(245,158,11,.20);
@@ -668,11 +668,11 @@ body.dark {
 }
 body.dark {
   background:
-    radial-gradient(circle at 0% 0%, rgba(12,143,166,.10), transparent 42%),
-    radial-gradient(circle at 100% 100%, rgba(59,130,246,.08), transparent 44%),
+    radial-gradient(circle at 0% 0%, rgba(37,99,235,.12), transparent 42%),
+    radial-gradient(circle at 100% 100%, rgba(56,189,248,.08), transparent 44%),
     var(--bg);
 }
-body.dark .topbar { background: rgba(22,36,42,.85); }
+body.dark .topbar { background: rgba(19,32,59,.85); }
 body.dark .tb-pill { color: #6EE7B7; }
 body.dark .theme-btn { background: var(--gray-100); color: #FBBF24; }
 body.dark .badge-blue { color: #5EEAD4; }
@@ -843,7 +843,6 @@ body.dark .bg-deco span { opacity: .08; }
                 <span id="AI-ST">Tayyorlanmoqda...</span>
               </div>
             </div>
-            <button class="tts-btn" id="TTS-BTN" onclick="toggleTTS()" title="Ovoz">&#128266;</button>
           </div>
 
           <div class="q-card">
@@ -1521,7 +1520,7 @@ function toggleTheme(){
 
 // ── APP STATE ─────────────────────────────────────────────
 var APP = {
-  qs:[], qi:0, ok:0, no:0, active:false, sec:0, ti:null, tts:true, res:[],
+  qs:[], qi:0, ok:0, no:0, active:false, sec:0, ti:null, tts:false, res:[],
   students:[],
   library:[],
   vids:[
@@ -1677,7 +1676,6 @@ function loadQ(i){
   el("MIC-BOX").style.display = "none";
   hide("BTN-OK"); hide("BTN-NO"); hide("BTN-NX"); show("BTN-A");
   setAI("Savol oqulmoqda...", true);
-  if(APP.tts) speak(q.q);
   updProg();
 }
 
@@ -1687,7 +1685,6 @@ function showAnswer(){
   el("ANS-BOX").style.display = "block";
   hide("BTN-A"); show("BTN-OK"); show("BTN-NO");
   setAI("Javob oqulmoqda...", true);
-  if(APP.tts) speak(q.a);
 }
 
 function markResult(isOk){
