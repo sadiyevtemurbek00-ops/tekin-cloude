@@ -12,13 +12,13 @@
 <style>
 :root {
   /* Calm deep teal-green base for sidebar/dark panels */
-  --navy: #103D34;
-  --navy2: #14534A;
-  --navy3: #0F6157;
-  /* Primary accent — calm teal-green (biology, tinch) */
-  --blue: #0E9F6E;
-  --blue2: #0B7E58;
-  --blue-l: #E6F6F0;
+  --navy: #0E3A44;
+  --navy2: #114E5A;
+  --navy3: #0E5A66;
+  /* Primary accent — calm blue-teal (biology + ko'kroq) */
+  --blue: #0C8FA6;
+  --blue2: #0A7185;
+  --blue-l: #E4F4F7;
   /* Secondary — soft sky blue (info) */
   --cyan: #3B82F6;
   --cyan-l: #EAF2FE;
@@ -35,8 +35,8 @@
   /* Palette helpers (muted, calm) */
   --yellow: #FBBF24;
   --yellow-l: #FDF3E2;
-  --leaf: #0E9F6E;
-  --leaf-l: #E6F6F0;
+  --leaf: #0C8FA6;
+  --leaf-l: #E4F4F7;
   --ocean: #3B82F6;       /* ko'k */
   --ocean-l: #EAF2FE;
   --azure: #38BDF8;       /* moviy */
@@ -54,13 +54,13 @@
   --lime: #65A30D;
 
   /* Signature gradients — calm, low-glare */
-  --grad-main: linear-gradient(135deg, #0E9F6E 0%, #14B8A6 100%);
+  --grad-main: linear-gradient(135deg, #0C8FA6 0%, #3B82F6 100%);
   --grad-cool: linear-gradient(135deg, #3B82F6 0%, #38BDF8 100%);
   --grad-warm: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
-  --grad-fresh: linear-gradient(135deg, #0E9F6E 0%, #34D399 100%);
+  --grad-fresh: linear-gradient(135deg, #0C8FA6 0%, #2DD4BF 100%);
   --grad-sky: linear-gradient(135deg, #38BDF8 0%, #3B82F6 100%);
   --grad-sun: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
-  --grad-sidebar: linear-gradient(165deg, #103D34 0%, #14534A 50%, #0F6157 100%);
+  --grad-sidebar: linear-gradient(165deg, #0E3A44 0%, #114E5A 50%, #0E5A66 100%);
 
   --gray-50: #F7FAF8;
   --gray-100: #EFF3F1;
@@ -88,7 +88,7 @@
 body {
   font-family: 'Inter', sans-serif; color: var(--text); min-height: 100vh;
   background:
-    radial-gradient(circle at 0% 0%, rgba(14,159,110,.07), transparent 40%),
+    radial-gradient(circle at 0% 0%, rgba(12,143,166,.07), transparent 40%),
     radial-gradient(circle at 100% 100%, rgba(59,130,246,.06), transparent 42%),
     var(--bg);
   background-attachment: fixed;
@@ -170,7 +170,7 @@ body {
   margin-bottom: 1px; transition: all .15s; position: relative;
 }
 .ni:hover { background: rgba(255,255,255,.08); color: #fff; transform: translateX(2px); }
-.ni.on { background: linear-gradient(90deg, rgba(14,159,110,.32), rgba(59,130,246,.26)); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.10); }
+.ni.on { background: linear-gradient(90deg, rgba(12,143,166,.32), rgba(59,130,246,.26)); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.10); }
 .ni.on::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; background: var(--grad-sun); border-radius: 0 3px 3px 0; }
 .ni-ic { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .ni-ic svg { width: 19px; height: 19px; display: block; }
@@ -332,12 +332,12 @@ label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; 
   width: 52px; height: 52px; border-radius: 14px;
   background: var(--grad-fresh);
   display: flex; align-items: center; justify-content: center; font-size: 24px;
-  box-shadow: 0 0 22px rgba(34,197,94,.55); flex-shrink: 0;
+  box-shadow: 0 0 22px rgba(12,143,166,.55); flex-shrink: 0;
   position: relative;
 }
 .ai-avatar-pulse {
   position: absolute; inset: -4px; border-radius: 18px;
-  border: 2px solid rgba(132,204,22,.55); animation: avatarPulse 2s infinite;
+  border: 2px solid rgba(56,189,248,.55); animation: avatarPulse 2s infinite;
 }
 @keyframes avatarPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.06)} }
 .ai-name { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; color: #fff; }
@@ -459,7 +459,7 @@ label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; 
 
 /* ============ RESULT ============ */
 .result-hero {
-  background: linear-gradient(150deg, #103D34 0%, #0E9F6E 50%, #14B8A6 100%);
+  background: linear-gradient(150deg, #103D44 0%, #0C8FA6 50%, #14B8A6 100%);
   border-radius: 18px; padding: 36px; text-align: center; color: #fff; margin-bottom: 18px;
   border: 1px solid rgba(56,189,248,.22); position: relative; overflow: hidden;
   box-shadow: 0 16px 44px rgba(16,61,52,.35);
@@ -639,17 +639,17 @@ label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; 
 
 /* ============ DARK MODE (tungi rejim — ko'zga yumshoq) ============ */
 body.dark {
-  --surface: #182320;
-  --bg: #0F1714;
-  --text: #E4ECE8;
-  --text2: #BCC8C2;
-  --text3: #87958E;
-  --border: #283631;
-  --gray-50: #1C2723;
-  --gray-100: #212E29;
-  --gray-200: #2C3A34;
-  --gray-300: #3A4842;
-  --blue-l: rgba(14,159,110,.20);
+  --surface: #16242A;
+  --bg: #0E161A;
+  --text: #E4ECEF;
+  --text2: #BCC8CC;
+  --text3: #879298;
+  --border: #28363B;
+  --gray-50: #1C2A2E;
+  --gray-100: #212F34;
+  --gray-200: #2C3B40;
+  --gray-300: #3A4A50;
+  --blue-l: rgba(12,143,166,.20);
   --green-l: rgba(22,163,74,.20);
   --cyan-l: rgba(59,130,246,.20);
   --amber-l: rgba(245,158,11,.20);
@@ -660,7 +660,7 @@ body.dark {
   --violet-l: rgba(59,130,246,.20);
   --teal-l: rgba(20,184,166,.20);
   --orange-l: rgba(245,158,11,.20);
-  --leaf-l: rgba(14,159,110,.20);
+  --leaf-l: rgba(12,143,166,.20);
   --green-d: #34D399;
   --sh: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
   --sh2: 0 6px 20px rgba(0,0,0,.5);
@@ -668,11 +668,11 @@ body.dark {
 }
 body.dark {
   background:
-    radial-gradient(circle at 0% 0%, rgba(14,159,110,.10), transparent 42%),
+    radial-gradient(circle at 0% 0%, rgba(12,143,166,.10), transparent 42%),
     radial-gradient(circle at 100% 100%, rgba(59,130,246,.08), transparent 44%),
     var(--bg);
 }
-body.dark .topbar { background: rgba(24,35,32,.85); }
+body.dark .topbar { background: rgba(22,36,42,.85); }
 body.dark .tb-pill { color: #6EE7B7; }
 body.dark .theme-btn { background: var(--gray-100); color: #FBBF24; }
 body.dark .badge-blue { color: #5EEAD4; }
@@ -772,7 +772,7 @@ body.dark .upload-zone:hover { background: rgba(59,130,246,.12); }
             <svg class="dna-svg" width="44" height="44" viewBox="0 0 44 44">
               <circle cx="22" cy="22" r="20" fill="none" stroke="rgba(20,184,166,.45)" stroke-width="1.5"/>
               <circle cx="22" cy="22" r="13" fill="none" stroke="rgba(56,189,248,.35)" stroke-width="1" stroke-dasharray="4 3"/>
-              <circle cx="22" cy="8" r="3" fill="#0E9F6E" opacity=".9"/>
+              <circle cx="22" cy="8" r="3" fill="#0C8FA6" opacity=".9"/>
               <circle cx="22" cy="36" r="3" fill="#3B82F6" opacity=".9"/>
               <circle cx="36" cy="22" r="2" fill="#F59E0B" opacity=".85"/>
               <circle cx="8" cy="22" r="2" fill="#14B8A6" opacity=".85"/>
@@ -851,7 +851,7 @@ body.dark .upload-zone:hover { background: rgba(59,130,246,.12); }
                 stroke-linecap="round" style="transition:stroke-dashoffset .6s"/>
               <defs>
                 <linearGradient id="sg" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#0E9F6E"/>
+                  <stop offset="0%" stop-color="#0C8FA6"/>
                   <stop offset="100%" stop-color="#3B82F6"/>
                 </linearGradient>
               </defs>
@@ -1475,9 +1475,9 @@ var APP = {
   students:[],
   library:[],
   vids:[
-    {id:1,title:"Fotosintez jarayoni",sinf:"5-sinf",dur:"12:34",bg:"linear-gradient(135deg,#0E9F6E,#34D399)",url:""},
+    {id:1,title:"Fotosintez jarayoni",sinf:"5-sinf",dur:"12:34",bg:"linear-gradient(135deg,#0C8FA6,#2DD4BF)",url:""},
     {id:2,title:"Hujayra tuzilishi",sinf:"7-sinf",dur:"15:20",bg:"linear-gradient(135deg,#3B82F6,#38BDF8)",url:""},
-    {id:3,title:"DNK va RNK",sinf:"9-sinf",dur:"18:45",bg:"linear-gradient(135deg,#0E9F6E,#3B82F6)",url:""},
+    {id:3,title:"DNK va RNK",sinf:"9-sinf",dur:"18:45",bg:"linear-gradient(135deg,#0C8FA6,#3B82F6)",url:""},
     {id:4,title:"Qon aylanishi",sinf:"8-sinf",dur:"14:10",bg:"linear-gradient(135deg,#F59E0B,#FBBF24)",url:""},
     {id:5,title:"Mitoz bolinish",sinf:"7-sinf",dur:"11:22",bg:"linear-gradient(135deg,#14B8A6,#3B82F6)",url:""}
   ]
@@ -2310,7 +2310,7 @@ function filterV(sinf,btn){
 }
 function addVid(){
   var t=prompt("Video sarlavhasi:"); if(!t) return;
-  APP.vids.push({id:Date.now(),title:t,sinf:"5-sinf",dur:"—",bg:"linear-gradient(135deg,#0E9F6E,#3B82F6)",url:""});
+  APP.vids.push({id:Date.now(),title:t,sinf:"5-sinf",dur:"—",bg:"linear-gradient(135deg,#0C8FA6,#3B82F6)",url:""});
   renderVids("all"); toast("Video qoshildi");
 }
 function addYT(){
@@ -2579,8 +2579,8 @@ function renderAnalysis(){
       datasets: [{
         label: "O'zlashtirish %",
         data: data,
-        borderColor: "#0E9F6E",
-        backgroundColor: "rgba(14,159,110,.10)",
+        borderColor: "#0C8FA6",
+        backgroundColor: "rgba(12,143,166,.10)",
         borderWidth: 2.5,
         pointBackgroundColor: data.map(function(v){ return v>=86?"#10B981":v>=70?"#F59E0B":"#EF4444"; }),
         pointRadius: 6,
