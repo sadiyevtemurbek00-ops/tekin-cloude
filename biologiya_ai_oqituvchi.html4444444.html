@@ -2493,7 +2493,41 @@ function renderResult(pct, tot){
 }
 
 // ── PDF EXPORT ────────────────────────────────────────────
-function exportPDF(){
+// jsPDF konstruktorini ishonchli aniqlash (versiya/global nomi farqlariga chidamli)
+function getJsPDF(){
+  if(window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  if(window.jsPDF) return window.jsPDF;
+  if(typeof jsPDF !== "undefined") return jsPDF;
+  return null;
+}
+
+// Skriptni bir marta dinamik yuklash
+function loadScriptOnce(src){
+  return new Promise(function(resolve, reject){
+    if(document.querySelector('script[data-dyn="'+src+'"]')){ resolve(); return; }
+    var s = document.createElement("script");
+    s.src = src; s.setAttribute("data-dyn", src);
+    s.onload = function(){ resolve(); };
+    s.onerror = function(){ reject(new Error("yuklab bo'lmadi: "+src)); };
+    document.head.appendChild(s);
+  });
+}
+
+// jsPDF mavjudligini ta'minlash (kerak bo'lsa CDN dan qayta yuklaydi)
+async function ensureJsPDF(){
+  if(getJsPDF()) return getJsPDF();
+  try{ await loadScriptOnce("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"); }catch(e){}
+  return getJsPDF();
+}
+
+// XLSX mavjudligini ta'minlash (kerak bo'lsa CDN dan qayta yuklaydi)
+async function ensureXLSX(){
+  if(window.XLSX) return window.XLSX;
+  try{ await loadScriptOnce("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"); }catch(e){}
+  return window.XLSX;
+}
+
+async function exportPDF(){
   var pct=APP.ok+APP.no>0?Math.round(APP.ok/(APP.ok+APP.no)*100):0;
   var stars=calcStars(pct);
   var stu=APP.currentStu?APP.currentStu.name:(el("T-ST")?(el("T-ST").value||"Oquvchi"):"Oquvchi");
@@ -2504,7 +2538,8 @@ function exportPDF(){
   var today=new Date().toLocaleDateString("uz-UZ");
 
   try{
-    var jsPDF=window.jspdf.jsPDF;
+    var jsPDF=await ensureJsPDF();
+    if(!jsPDF){ toast("PDF kutubxonasi yuklanmadi. Internetni tekshiring va sahifani yangilang."); return; }
     var doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
 
     // Header
@@ -3319,8 +3354,8 @@ function loadStudents(){
 }
 
 // ── EXCEL / PDF EKSPORT (Profillar) ───────────────────────
-function exportStudentsExcel(){
-  if(!window.XLSX){ toast("Excel kutubxonasi yuklanmadi"); return; }
+async function exportStudentsExcel(){
+  if(!(await ensureXLSX())){ toast("Excel kutubxonasi yuklanmadi. Internetni tekshiring va sahifani yangilang."); return; }
   if(!APP.students || !APP.students.length){ toast("O'quvchilar yo'q"); return; }
   var sorted = APP.students.slice().sort(function(a,b){ return b.avg - a.avg; });
   var aoa = [["#","Ism Familiya","Sinf","O'rtacha ball (%)","Yulduzlar","Sessiyalar","Oxirgi faollik","Daraja"]];
@@ -3340,10 +3375,11 @@ function exportStudentsExcel(){
   sendTgDocument(blob, fname, "📊 O'quvchilar profili hisoboti (Excel)");
 }
 
-function exportStudentsPDF(){
+async function exportStudentsPDF(){
   if(!APP.students || !APP.students.length){ toast("O'quvchilar yo'q"); return; }
   try{
-    var jsPDF = window.jspdf.jsPDF;
+    var jsPDF = await ensureJsPDF();
+    if(!jsPDF){ toast("PDF kutubxonasi yuklanmadi. Internetni tekshiring va sahifani yangilang."); return; }
     var doc = new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var today = new Date().toLocaleDateString("uz-UZ");
 
@@ -3413,8 +3449,8 @@ function collectTestRows(){
   return {date:date, topic:topic, rows:rows};
 }
 
-function exportTestsExcel(){
-  if(!window.XLSX){ toast("Excel kutubxonasi yuklanmadi"); return; }
+async function exportTestsExcel(){
+  if(!(await ensureXLSX())){ toast("Excel kutubxonasi yuklanmadi. Internetni tekshiring va sahifani yangilang."); return; }
   var d = collectTestRows();
   if(!d.rows.length){ toast("Avval test natijalarini kiriting"); return; }
   var aoa = [
@@ -3438,11 +3474,12 @@ function exportTestsExcel(){
   sendTgDocument(blob, tfname, "📊 Test natijalari" + (d.topic?" — "+d.topic:"") + (d.date?" ("+d.date+")":""));
 }
 
-function exportTestsPDF(){
+async function exportTestsPDF(){
   var d = collectTestRows();
   if(!d.rows.length){ toast("Avval test natijalarini kiriting"); return; }
   try{
-    var jsPDF = window.jspdf.jsPDF;
+    var jsPDF = await ensureJsPDF();
+    if(!jsPDF){ toast("PDF kutubxonasi yuklanmadi. Internetni tekshiring va sahifani yangilang."); return; }
     var doc = new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var today = new Date().toLocaleDateString("uz-UZ");
 
