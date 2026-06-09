@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -987,7 +988,11 @@ body.dark .bg-deco span { opacity: .08; }
   <div class="scr" id="SCR-students">
     <div class="sec-head">
       <div><div class="sec-title">O'quvchilar profili</div><div class="sec-sub">O'zlashtirish va reyting ko'rsatkichlari</div></div>
-      <button class="btn btn-primary" onclick="toggleAddStuForm()">+ O'quvchi qo'shish</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="exportStudentsExcel()">&#128202; Excel</button>
+        <button class="btn btn-secondary" onclick="exportStudentsPDF()">&#128196; PDF</button>
+        <button class="btn btn-primary" onclick="toggleAddStuForm()">+ O'quvchi qo'shish</button>
+      </div>
     </div>
     <div id="ADD-STU-FORM" style="display:none;margin-bottom:18px">
       <div class="card" style="padding:16px">
@@ -1247,6 +1252,12 @@ body.dark .bg-deco span { opacity: .08; }
         </button>
         <button class="btn btn-secondary" onclick="sendTestResults('both')">
           📨 Ikkalasini yuborish
+        </button>
+        <button class="btn btn-secondary" onclick="exportTestsExcel()">
+          📊 Excel
+        </button>
+        <button class="btn btn-secondary" onclick="exportTestsPDF()">
+          📄 PDF
         </button>
         <button class="btn btn-primary" onclick="saveTestResults()">
           💾 Saqlash
@@ -3261,6 +3272,170 @@ function loadStudents(){
       if(loaded && loaded.length) APP.students = loaded;
     }
   } catch(e){ console.log("Students load error:", e); }
+}
+
+// ── EXCEL / PDF EKSPORT (Profillar) ───────────────────────
+function exportStudentsExcel(){
+  if(!window.XLSX){ toast("Excel kutubxonasi yuklanmadi"); return; }
+  if(!APP.students || !APP.students.length){ toast("O'quvchilar yo'q"); return; }
+  var sorted = APP.students.slice().sort(function(a,b){ return b.avg - a.avg; });
+  var aoa = [["#","Ism Familiya","Sinf","O'rtacha ball (%)","Yulduzlar","Sessiyalar","Oxirgi faollik","Daraja"]];
+  sorted.forEach(function(s,i){
+    var grade = s.avg>=86?"A'lo":s.avg>=70?"Yaxshi":s.avg>=60?"Qoniqarli":"Yordam kerak";
+    aoa.push([i+1, s.name, s.sinf||"", s.avg, s.stars||0, s.ses||0, s.last||"", grade]);
+  });
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = [{wch:4},{wch:26},{wch:9},{wch:16},{wch:10},{wch:11},{wch:16},{wch:14}];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "O'quvchilar");
+  XLSX.writeFile(wb, "oquvchilar_"+new Date().toISOString().split("T")[0]+".xlsx");
+  toast("Excel yuklab olindi");
+}
+
+function exportStudentsPDF(){
+  if(!APP.students || !APP.students.length){ toast("O'quvchilar yo'q"); return; }
+  try{
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var today = new Date().toLocaleDateString("uz-UZ");
+
+    doc.setFillColor(11,20,38); doc.rect(0,0,210,32,"F");
+    doc.setFillColor(26,111,244); doc.rect(0,29,210,3,"F");
+    doc.setTextColor(255,255,255); doc.setFontSize(15); doc.setFont("helvetica","bold");
+    doc.text("ALC O'quv Markazi — S.T. Biologiya",14,14);
+    doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(150,170,200);
+    doc.text("O'quvchilar profili hisoboti",14,23);
+    doc.setFontSize(8); doc.text(today,196,12,{align:"right"});
+
+    var avg = Math.round(APP.students.reduce(function(s,x){return s+x.avg;},0)/APP.students.length);
+    var exc = APP.students.filter(function(s){return s.avg>=86;}).length;
+    doc.setTextColor(30,30,30); doc.setFontSize(10);
+    doc.text("Jami o'quvchi: "+APP.students.length+"    O'rtacha ball: "+avg+"%    A'lochilar: "+exc,14,42);
+
+    var sorted = APP.students.slice().sort(function(a,b){ return b.avg - a.avg; });
+    var y = 52;
+    doc.setFillColor(26,111,244); doc.rect(10,y-6,190,8,"F");
+    doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont("helvetica","bold");
+    doc.text("#",13,y); doc.text("Ism Familiya",22,y); doc.text("Sinf",92,y);
+    doc.text("Ball",118,y); doc.text("Sessiya",138,y); doc.text("Daraja",168,y);
+    y += 8;
+    doc.setFont("helvetica","normal");
+    sorted.forEach(function(s,i){
+      if(y > 285){ doc.addPage(); y = 20; }
+      if(i%2===0){ doc.setFillColor(245,247,250); doc.rect(10,y-5,190,7,"F"); }
+      var grade = s.avg>=86?"A'lo":s.avg>=70?"Yaxshi":s.avg>=60?"Qoniqarli":"Yordam";
+      doc.setTextColor(30,30,30); doc.setFontSize(9);
+      doc.text(String(i+1),13,y);
+      doc.text(String(s.name).substring(0,32),22,y);
+      doc.text(String(s.sinf||"-"),92,y);
+      var sc = s.avg>=86?[16,185,129]:s.avg>=70?[245,158,11]:[239,68,68];
+      doc.setTextColor(sc[0],sc[1],sc[2]); doc.setFont("helvetica","bold");
+      doc.text(s.avg+"%",118,y);
+      doc.setFont("helvetica","normal"); doc.setTextColor(30,30,30);
+      doc.text(String(s.ses||0),142,y);
+      doc.text(grade,168,y);
+      y += 7;
+    });
+    doc.save("oquvchilar_"+new Date().toISOString().split("T")[0]+".pdf");
+    toast("PDF yuklab olindi");
+  }catch(e){ toast("PDF xatosi: "+e.message); }
+}
+
+function collectTestRows(){
+  var date = el("TEST-DATE") ? el("TEST-DATE").value : "";
+  var topic = el("TEST-TOPIC") ? el("TEST-TOPIC").value.trim() : "";
+  var rows = [];
+  document.querySelectorAll(".test-row").forEach(function(row){
+    var sid = row.getAttribute("data-sid");
+    var stu = APP.students.find(function(x){ return String(x.id) === String(sid); });
+    var name = stu ? stu.name : "—";
+    var oGot = parseInt(row.querySelector(".t-open-got").value)||0;
+    var oTot = parseInt(row.querySelector(".t-open-total").value)||0;
+    var wGot = parseInt(row.querySelector(".t-wr-got").value)||0;
+    var wTot = parseInt(row.querySelector(".t-wr-total").value)||0;
+    var total = oTot + wTot;
+    var got = oGot + wGot;
+    var pct = total > 0 ? Math.round(got/total*100) : 0;
+    if(got > 0){
+      rows.push({name:name, oGot:oGot, oTot:oTot, wGot:wGot, wTot:wTot, got:got, total:total, pct:pct});
+    }
+  });
+  return {date:date, topic:topic, rows:rows};
+}
+
+function exportTestsExcel(){
+  if(!window.XLSX){ toast("Excel kutubxonasi yuklanmadi"); return; }
+  var d = collectTestRows();
+  if(!d.rows.length){ toast("Avval test natijalarini kiriting"); return; }
+  var aoa = [
+    ["Sana", d.date || "-"],
+    ["Mavzu / Fan", d.topic || "-"],
+    [],
+    ["#","O'quvchi","Ochiq (olingan)","Ochiq (jami)","Yozma (olingan)","Yozma (jami)","Jami ball","Foiz (%)"]
+  ];
+  d.rows.forEach(function(r,i){
+    aoa.push([i+1, r.name, r.oGot, r.oTot, r.wGot, r.wTot, r.got+"/"+r.total, r.pct]);
+  });
+  var ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = [{wch:4},{wch:26},{wch:15},{wch:12},{wch:15},{wch:12},{wch:12},{wch:9}];
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Test natijalari");
+  XLSX.writeFile(wb, "test_natijalari_"+(d.date||new Date().toISOString().split("T")[0])+".xlsx");
+  toast("Excel yuklab olindi");
+}
+
+function exportTestsPDF(){
+  var d = collectTestRows();
+  if(!d.rows.length){ toast("Avval test natijalarini kiriting"); return; }
+  try{
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var today = new Date().toLocaleDateString("uz-UZ");
+
+    doc.setFillColor(11,20,38); doc.rect(0,0,210,32,"F");
+    doc.setFillColor(26,111,244); doc.rect(0,29,210,3,"F");
+    doc.setTextColor(255,255,255); doc.setFontSize(15); doc.setFont("helvetica","bold");
+    doc.text("ALC O'quv Markazi — S.T. Biologiya",14,14);
+    doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(150,170,200);
+    doc.text("Test natijalari hisoboti",14,23);
+    doc.setFontSize(8); doc.text(today,196,12,{align:"right"});
+
+    doc.setTextColor(30,30,30); doc.setFontSize(10);
+    doc.text("Sana: "+(d.date||"-")+"    Mavzu: "+(d.topic||"-"),14,42);
+
+    var y = 52;
+    doc.setFillColor(26,111,244); doc.rect(10,y-6,190,8,"F");
+    doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont("helvetica","bold");
+    doc.text("#",13,y); doc.text("O'quvchi",22,y); doc.text("Ochiq",92,y);
+    doc.text("Yozma",122,y); doc.text("Jami",152,y); doc.text("Foiz",182,y);
+    y += 8;
+    doc.setFont("helvetica","normal");
+    d.rows.forEach(function(r,i){
+      if(y > 285){ doc.addPage(); y = 20; }
+      if(i%2===0){ doc.setFillColor(245,247,250); doc.rect(10,y-5,190,7,"F"); }
+      doc.setTextColor(30,30,30); doc.setFontSize(9);
+      doc.text(String(i+1),13,y);
+      doc.text(String(r.name).substring(0,30),22,y);
+      doc.text(r.oGot+"/"+r.oTot,92,y);
+      doc.text(r.wGot+"/"+r.wTot,122,y);
+      doc.text(r.got+"/"+r.total,152,y);
+      var sc = r.pct>=86?[16,185,129]:r.pct>=70?[245,158,11]:[239,68,68];
+      doc.setTextColor(sc[0],sc[1],sc[2]); doc.setFont("helvetica","bold");
+      doc.text(r.pct+"%",182,y);
+      doc.setFont("helvetica","normal");
+      y += 7;
+    });
+
+    var totals = d.rows.map(function(r){ return r.pct; });
+    var avg = Math.round(totals.reduce(function(a,b){return a+b;},0)/totals.length);
+    y += 4;
+    if(y > 285){ doc.addPage(); y = 20; }
+    doc.setTextColor(30,30,30); doc.setFontSize(10); doc.setFont("helvetica","bold");
+    doc.text("O'rtacha: "+avg+"%    Eng yuqori: "+Math.max.apply(null,totals)+"%    Eng past: "+Math.min.apply(null,totals)+"%",14,y);
+
+    doc.save("test_natijalari_"+(d.date||new Date().toISOString().split("T")[0])+".pdf");
+    toast("PDF yuklab olindi");
+  }catch(e){ toast("PDF xatosi: "+e.message); }
 }
 
 // ── TEST NATIJALARI ───────────────────────────────────────
