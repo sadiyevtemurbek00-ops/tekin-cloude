@@ -1356,8 +1356,8 @@ body.dark .bg-deco span { opacity: .08; }
           <input type="password" id="TG-TOKEN" placeholder="7123456789:AAF_xxxxxxxxxxx">
         </div>
         <div class="fg">
-          <label>Hisobot uchun Chat ID (o'qituvchi/admin)</label>
-          <input type="text" id="REPORT-CHAT-ID" placeholder="Excel/PDF hisobotlar shu chatga yuboriladi">
+          <label>Hisobot uchun qo'shimcha Chat ID (ixtiyoriy, admin)</label>
+          <input type="text" id="REPORT-CHAT-ID" placeholder="Hisobotlar barcha ota-onalarga + shu chatga yuboriladi">
         </div>
 
         <div style="display:flex;gap:8px">
@@ -1376,7 +1376,7 @@ body.dark .bg-deco span { opacity: .08; }
             4. Token ni yuqoridagi maydonga kiriting<br>
             5. Ota-ona Telegram ID olish uchun <b>@userinfobot</b> ga yozing<br>
             6. <b>Muhim:</b> Har bir qabul qiluvchi (ota-ona/o'qituvchi) avval botingizni ochib <b>Start</b> bossin<br>
-            7. Hisobot (Excel/PDF) uchun o'z Chat ID ingizni <b>"Hisobot uchun Chat ID"</b> maydoniga kiriting
+            7. Excel/PDF hisobotlar <b>barcha ota-onalarga</b> yuboriladi (Chat ID kiritilgan bo'lsa). Admin uchun yuqoridagi maydonni to'ldiring
           </div>
         </div>
       </div>
@@ -2939,12 +2939,24 @@ async function sendTgMessage(chatId, text){
   }
 }
 
-// Telegramga hujjat (Excel/PDF) yuborish
-async function sendTgDocument(blob, filename, caption){
-  var token = getTgToken();
-  if(!token){ toast("Avval Bot Token saqlang!"); return false; }
-  var chatId = getReportChatId();
-  if(!chatId){ toast("Avval 'Hisobot uchun Chat ID' ni kiriting (Ota-onalar bo'limi)"); return false; }
+// Hisobot qabul qiluvchilar ro'yxati: barcha ota-onalar + ixtiyoriy admin (takrorlarsiz)
+function getReportRecipients(){
+  var seen = {};
+  var list = [];
+  // Barcha ota-ona Chat ID lari
+  var pids = getParentIds();
+  Object.keys(pids).forEach(function(k){
+    var v = (pids[k]||"").trim();
+    if(v && !seen[v]){ seen[v] = true; list.push(v); }
+  });
+  // Ixtiyoriy admin/hisobot Chat ID
+  var admin = getReportChatId();
+  if(admin && !seen[admin]){ seen[admin] = true; list.push(admin); }
+  return list;
+}
+
+// Bitta chatga hujjat yuborish
+async function sendTgDocumentTo(chatId, token, blob, filename, caption){
   try{
     var fd = new FormData();
     fd.append("chat_id", chatId);
@@ -2955,20 +2967,29 @@ async function sendTgDocument(blob, filename, caption){
       body: fd
     });
     var data = await res.json();
-    if(data.ok){
-      addTgLog(chatId, "Hujjat: "+filename, true);
-      toast("Hisobot Telegramga yuborildi!");
-      return true;
-    } else {
-      addTgLog(chatId, "Xato: "+data.description, false);
-      toast("Telegram xatosi: "+data.description);
-      return false;
-    }
+    if(data.ok){ addTgLog(chatId, "Hujjat: "+filename, true); return true; }
+    addTgLog(chatId, "Xato: "+data.description, false);
+    return false;
   } catch(e){
     addTgLog(chatId, "Ulanish xatosi: "+e.message, false);
-    toast("Ulanish xatosi: "+e.message);
     return false;
   }
+}
+
+// Telegramga hujjat (Excel/PDF) yuborish — BARCHA ota-onalarga
+async function sendTgDocument(blob, filename, caption){
+  var token = getTgToken();
+  if(!token){ toast("Avval Bot Token saqlang!"); return false; }
+  var recipients = getReportRecipients();
+  if(!recipients.length){ toast("Chat ID yo'q: ota-onalar ID sini (yoki hisobot uchun Chat ID) kiriting"); return false; }
+  toast("Hisobot " + recipients.length + " ta qabul qiluvchiga yuborilmoqda...");
+  var ok = 0, fail = 0;
+  for(var i = 0; i < recipients.length; i++){
+    var sent = await sendTgDocumentTo(recipients[i], token, blob, filename, caption);
+    if(sent){ ok++; } else { fail++; }
+  }
+  toast("Hisobot yuborildi: " + ok + " ta" + (fail ? ", xato: " + fail + " ta" : ""));
+  return ok > 0;
 }
 
 async function testTgBot(){
