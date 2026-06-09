@@ -2513,6 +2513,17 @@ function loadScriptOnce(src){
   });
 }
 
+// PDF sarlavhasiga logotip qo'yish (xavfsiz — rasm buzuq bo'lsa ham yiqilmaydi)
+function pdfLogo(doc, x, y, size){
+  try{
+    if(typeof LOGO === "string" && LOGO.indexOf("data:image") === 0){
+      doc.addImage(LOGO, "JPEG", x, y, size, size);
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
 // jsPDF mavjudligini ta'minlash (kerak bo'lsa CDN dan qayta yuklaydi)
 async function ensureJsPDF(){
   if(getJsPDF()) return getJsPDF();
@@ -2545,10 +2556,11 @@ async function exportPDF(){
     // Header
     doc.setFillColor(11,20,38); doc.rect(0,0,210,40,"F");
     doc.setFillColor(26,111,244); doc.rect(0,37,210,3,"F");
+    pdfLogo(doc, 12, 9, 22);
     doc.setTextColor(255,255,255); doc.setFontSize(16); doc.setFont("helvetica","bold");
-    doc.text("ALC O'quv Markazi — S.T. Biologiya",14,17);
+    doc.text("ALC O'quv Markazi — S.T. Biologiya",40,17);
     doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(150,170,200);
-    doc.text("Biologiya AI Tizimi — Sessiya Hisoboti",14,27);
+    doc.text("Biologiya AI Tizimi — Sessiya Hisoboti",40,27);
     doc.setTextColor(150,170,200); doc.setFontSize(8);
     doc.text(today,195,10,{align:"right"});
 
@@ -3406,10 +3418,11 @@ async function exportStudentsPDF(){
 
     doc.setFillColor(11,20,38); doc.rect(0,0,210,32,"F");
     doc.setFillColor(26,111,244); doc.rect(0,29,210,3,"F");
+    pdfLogo(doc, 12, 6, 20);
     doc.setTextColor(255,255,255); doc.setFontSize(15); doc.setFont("helvetica","bold");
-    doc.text("ALC O'quv Markazi — S.T. Biologiya",14,14);
+    doc.text("ALC O'quv Markazi — S.T. Biologiya",38,14);
     doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(150,170,200);
-    doc.text("O'quvchilar profili hisoboti",14,23);
+    doc.text("O'quvchilar profili hisoboti",38,23);
     doc.setFontSize(8); doc.text(today,196,12,{align:"right"});
 
     var avg = Math.round(APP.students.reduce(function(s,x){return s+x.avg;},0)/APP.students.length);
@@ -3506,10 +3519,11 @@ async function exportTestsPDF(){
 
     doc.setFillColor(11,20,38); doc.rect(0,0,210,32,"F");
     doc.setFillColor(26,111,244); doc.rect(0,29,210,3,"F");
+    pdfLogo(doc, 12, 6, 20);
     doc.setTextColor(255,255,255); doc.setFontSize(15); doc.setFont("helvetica","bold");
-    doc.text("ALC O'quv Markazi — S.T. Biologiya",14,14);
+    doc.text("ALC O'quv Markazi — S.T. Biologiya",38,14);
     doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(150,170,200);
-    doc.text("Test natijalari hisoboti",14,23);
+    doc.text("Test natijalari hisoboti",38,23);
     doc.setFontSize(8); doc.text(today,196,12,{align:"right"});
 
     doc.setTextColor(30,30,30); doc.setFontSize(10);
