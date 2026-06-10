@@ -105,3 +105,12 @@
 - O'zbek STT (Web Speech `uz-UZ`) sifati cheklangan — 3-bosqichda Whisper STT ko'rib chiqilishi mumkin.
 - Avto rejimda TTS+mikrofon aks-sadosi bo'lishi mumkin (naushnik tavsiya etiladi).
 - Umumiy o'zlashtirish hozircha to'g'ri/noto'g'ri sanog'i (`pct`) asosida; kelajakda AI ballari o'rtachasi bilan aniqroq qilish mumkin.
+
+
+### 3-bosqich (AI sessiya tahlili va o'zlashtirish darajasi)
+- `computeAiMastery()` — `APP.res` dagi AI ballarining o'rtachasi (mavjud bo'lsa).
+- `aiSessionAnalysis()` — sessiya yakunida Claude butun natijani tahlil qiladi, JSON qaytaradi: `{daraja: Yuqori/O'rta/Past, ball, kuchli, zaif, tavsiya}` (o'zbekcha).
+- `parseSessionAnalysis()`, `renderSessionAnalysis()` — natija ekranidagi `#RES-AI` / `#RES-AI-BODY` kartasida ko'rsatadi. Tugma `#RES-AI-BTN`.
+- API kalit bo'lsa, natija ekranida avtomatik ishga tushadi (`renderResult` oxirida).
+- `saveAnalysisToHistory()` — tahlil va `aiMastery` ni oxirgi sessiya tarixiga (`alc_bio_history` h[0]) saqlaydi.
+- Eslatma: Telegram ota-ona xabari `endSession`da darrov ketadi (AI tahlil async, unga ulanmagan). Kelajakda: tahlilni kutib, xabarga qo'shish mumkin.

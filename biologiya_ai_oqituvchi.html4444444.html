@@ -2655,11 +2655,93 @@ function renderResult(pct, tot){
   });
   cont.appendChild(det);
 
+  // AI o'zlashtirish tahlili
+  var aiCard=document.createElement("div"); aiCard.className="card"; aiCard.id="RES-AI"; aiCard.style.marginTop="14px";
+  var head=document.createElement("div"); head.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px";
+  var ht=document.createElement("div"); ht.style.cssText="font-size:14px;font-weight:700"; ht.innerHTML="&#129302; AI o'zlashtirish tahlili";
+  var hb=document.createElement("button"); hb.className="btn btn-secondary"; hb.id="RES-AI-BTN"; hb.textContent="AI tahlil olish"; hb.onclick=aiSessionAnalysis;
+  head.appendChild(ht); head.appendChild(hb); aiCard.appendChild(head);
+  var amv=computeAiMastery();
+  if(amv!==null){
+    var mline=document.createElement("div"); mline.style.cssText="font-size:13px;margin-bottom:8px";
+    var mcol=amv>=86?"#16B981":amv>=50?"#F59E0B":"#EF4444";
+    mline.innerHTML="AI ballari o'rtachasi: <b style='color:"+mcol+"'>"+amv+"%</b>";
+    aiCard.appendChild(mline);
+  }
+  var body=document.createElement("div"); body.id="RES-AI-BODY"; body.style.cssText="font-size:13px;color:var(--text2);line-height:1.6";
+  body.textContent="AI tahlil olish uchun yuqoridagi tugmani bosing.";
+  aiCard.appendChild(body); cont.appendChild(aiCard);
+
   // Buttons
   var btns=document.createElement("div"); btns.style.cssText="display:flex;gap:9px;flex-wrap:wrap;margin-top:4px";
   var b1=document.createElement("button"); b1.className="btn btn-primary"; b1.innerHTML="&#9654; Yangi sessiya"; b1.onclick=function(){go("session");};
   var b2=document.createElement("button"); b2.className="btn btn-secondary"; b2.innerHTML="&#128196; PDF Hisobot"; b2.onclick=exportPDF;
   btns.appendChild(b1); btns.appendChild(b2); cont.appendChild(btns);
+  if(getKey() && APP.res.length){ setTimeout(aiSessionAnalysis, 300); }
+}
+
+// ── AI SESSIYA TAHLILI (3-bosqich) ────────────────────────
+function computeAiMastery(){
+  var balls=(APP.res||[]).filter(function(r){ return typeof r.ball==="number"; }).map(function(r){ return r.ball; });
+  if(!balls.length) return null;
+  return Math.round(balls.reduce(function(a,b){return a+b;},0)/balls.length);
+}
+
+async function aiSessionAnalysis(){
+  if(!APP.res || !APP.res.length){ toast("Tahlil uchun ma'lumot yo'q"); return; }
+  if(!getKey()){ openModal(aiSessionAnalysis); return; }
+  var body=el("RES-AI-BODY"), btn=el("RES-AI-BTN");
+  if(body) body.textContent="AI tahlil tayyorlanmoqda...";
+  if(btn) btn.disabled=true;
+  var lines=APP.res.map(function(r,i){
+    return (i+1)+") Savol: "+r.q+" | To'g'ri javob: "+r.a+" | O'quvchi javobi: "+(r.stuAns||"(yozilmagan)")+" | "+(typeof r.ball==="number"?("AI ball: "+r.ball+"%"):(r.ok?"To'g'ri":"Noto'g'ri"));
+  }).join("\n");
+  var stu=APP.currentStu?APP.currentStu.name:"O'quvchi";
+  var prompt=
+    "Sen tajribali biologiya o'qituvchisisan. Quyidagi sessiya natijalarini tahlil qilib, o'quvchining o'zlashtirish darajasini aniqla. "+
+    "FAQAT JSON qaytar, boshqa matn yozma. Format: "+
+    "{\"daraja\":\"Yuqori\" yoki \"O'rta\" yoki \"Past\", \"ball\":<0-100 butun son>, \"kuchli\":\"<kuchli tomonlar, qisqa>\", \"zaif\":\"<takrorlash kerak mavzular, qisqa>\", \"tavsiya\":\"<2-3 ta aniq amaliy tavsiya>\"}. Barchasi o'zbekcha bo'lsin.\n\n"+
+    "O'quvchi: "+stu+"\nSessiya natijalari:\n"+lines;
+  try{
+    var raw=await callAI(prompt);
+    var a=parseSessionAnalysis(raw);
+    APP.aiSummary=a;
+    renderSessionAnalysis(a);
+    saveAnalysisToHistory(a);
+  }catch(e){
+    if(body) body.textContent="Tahlil xatosi: "+e.message;
+    var m=(e.message||"").toLowerCase();
+    if(m.includes("auth")||m.includes("key")||m.includes("api")||m.includes("credit")) openModal(null);
+  } finally { if(btn) btn.disabled=false; }
+}
+
+function parseSessionAnalysis(raw){
+  try{
+    var m=String(raw).match(/\{[\s\S]*\}/);
+    var o=JSON.parse(m?m[0]:raw);
+    var b=parseInt(o.ball);
+    return { daraja:o.daraja||"", ball:(isNaN(b)?null:Math.max(0,Math.min(100,b))), kuchli:o.kuchli||"", zaif:o.zaif||"", tavsiya:o.tavsiya||"" };
+  }catch(e){
+    return { daraja:"", ball:null, kuchli:"", zaif:"", tavsiya:String(raw).substring(0,400), raw:true };
+  }
+}
+
+function renderSessionAnalysis(a){
+  var body=el("RES-AI-BODY"); if(!body) return;
+  if(a.raw){ body.textContent=a.tavsiya; return; }
+  var col=a.daraja==="Yuqori"?"#16B981":a.daraja==="Past"?"#EF4444":"#F59E0B";
+  body.innerHTML=
+    "<div style='font-size:15px;font-weight:800;color:"+col+";margin-bottom:8px'>O'zlashtirish darajasi: "+(a.daraja||"-")+(a.ball!==null?" ("+a.ball+"%)":"")+"</div>"+
+    (a.kuchli?"<div style='margin-bottom:6px'><b>&#128170; Kuchli tomonlar:</b> "+a.kuchli+"</div>":"")+
+    (a.zaif?"<div style='margin-bottom:6px'><b>&#9888;&#65039; Zaif tomonlar:</b> "+a.zaif+"</div>":"")+
+    (a.tavsiya?"<div><b>&#128161; Tavsiya:</b> "+a.tavsiya+"</div>":"");
+}
+
+function saveAnalysisToHistory(a){
+  try{
+    var h=loadHistory();
+    if(h.length){ h[0].aiSummary=a; h[0].aiMastery=computeAiMastery(); localStorage.setItem("alc_bio_history", JSON.stringify(h)); }
+  }catch(e){}
 }
 
 // ── PDF EXPORT ────────────────────────────────────────────
