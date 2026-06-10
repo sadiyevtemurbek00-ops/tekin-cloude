@@ -969,6 +969,10 @@ body.dark .bg-deco span { opacity: .08; }
   <div class="scr" id="SCR-chat">
     <div class="sec-head">
       <div><div class="sec-title">AI Biologiya Yordamchisi</div><div class="sec-sub">Biologiya bo'yicha istalgan savolni bering</div></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span id="API-STATUS" style="font-size:12px;font-weight:600;padding:5px 10px;border-radius:8px"></span>
+        <button class="btn btn-secondary" onclick="openModal(null)">&#128273; API kalit</button>
+      </div>
     </div>
     <div class="card" style="max-width:700px">
       <div class="chat-box" id="CHAT-BOX">
@@ -1510,6 +1514,7 @@ body.dark .bg-deco span { opacity: .08; }
     <div class="fg"><label>API kalitingiz (sk-ant-...)</label><input type="password" id="API-IN" placeholder="sk-ant-..."></div>
     <div style="display:flex;gap:8px;margin-top:12px">
       <button class="btn btn-primary" onclick="saveKey()" style="flex:1">Saqlash</button>
+      <button class="btn btn-secondary" id="API-DEL-BTN" onclick="removeKey()" style="display:none">O'chirish</button>
       <button class="btn btn-secondary" onclick="closeModal()">Bekor</button>
     </div>
     <div style="font-size:11px;color:var(--text3);margin-top:9px">&#128274; Kalit faqat sizning brauzeringizda saqlanadi</div>
@@ -1590,6 +1595,7 @@ function go(name){
   if(name==="library") renderLibrary();
   if(name==="tests") renderTests();
   if(name==="repeat") renderRepeat();
+  if(name==="chat") updateApiStatus();
 }
 
 // ── SESSION ───────────────────────────────────────────────
@@ -2132,11 +2138,36 @@ function saveKey(){
   var k=el("API-IN").value.trim();
   if(!k.startsWith("sk-")){ toast("Kalit sk- bilan boshlanishi kerak"); return; }
   localStorage.setItem("alc_bio_key",k); closeModal(); toast("API kalit saqlandi!");
+  updateApiStatus();
   if(PEND){ PEND(); PEND=null; }
 }
+function removeKey(){
+  localStorage.removeItem("alc_bio_key");
+  var inp=el("API-IN"); if(inp) inp.value="";
+  closeModal(); toast("API kalit o'chirildi");
+  updateApiStatus();
+}
 function closeModal(){ el("API-MOD").classList.remove("on"); PEND=null; }
-function openModal(cb){ PEND=cb; var s=getKey(); if(s) el("API-IN").value=s; el("API-MOD").classList.add("on"); }
+function openModal(cb){
+  PEND=cb;
+  var s=getKey();
+  if(s) el("API-IN").value=s;
+  var del=el("API-DEL-BTN"); if(del) del.style.display = s ? "" : "none";
+  el("API-MOD").classList.add("on");
+}
 var PEND=null;
+
+// API kalit holatini ko'rsatish (AI bo'limidagi badge)
+function updateApiStatus(){
+  var b=el("API-STATUS"); if(!b) return;
+  if(getKey()){
+    b.textContent="\u2705 Kalit ulangan";
+    b.style.background="var(--green-l)"; b.style.color="#065F46";
+  } else {
+    b.textContent="\u26A0\uFE0F Kalit kiritilmagan";
+    b.style.background="var(--red-l)"; b.style.color="#991B1B";
+  }
+}
 
 async function callAI(prompt){
   var k=getKey(); if(!k) return null;
@@ -4128,6 +4159,7 @@ window.addEventListener("load", function(){
 loadStudents();
 loadLibrary();
 initQA(); renderStudents(); renderVids("all");
+updateApiStatus();
 
 // ── KICHIK HAYVON ANIMATSIYALARI (xilma-xil harakat) ──────
 (function(){
