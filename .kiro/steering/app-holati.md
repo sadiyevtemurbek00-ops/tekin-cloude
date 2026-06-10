@@ -114,3 +114,12 @@
 - API kalit bo'lsa, natija ekranida avtomatik ishga tushadi (`renderResult` oxirida).
 - `saveAnalysisToHistory()` — tahlil va `aiMastery` ni oxirgi sessiya tarixiga (`alc_bio_history` h[0]) saqlaydi.
 - Eslatma: Telegram ota-ona xabari `endSession`da darrov ketadi (AI tahlil async, unga ulanmagan). Kelajakda: tahlilni kutib, xabarga qo'shish mumkin.
+
+
+### YANGILANISH: AI tahlil -> Telegram & PDF, stu.avg AI ball asosida
+- `endSession` endi `computeAiMastery()` ni hisoblab, `stu.avg` ni AI ball o'rtachasi asosida yangilaydi (AI ball bo'lmasa, pct ga qaytadi).
+- `finishSessionAI(pct, tot, aiM)` — AI tahlilni (`aiSessionAnalysis()` endi obyekt qaytaradi) kutib, so'ng `sendParentNotification(pct, tot, summary, aiM)` chaqiradi.
+- `sendParentNotification` ota-ona xabariga "AI ball o'rtachasi" + AI tahlil (daraja/kuchli/zaif/tavsiya) qo'shadi.
+- `exportPDF` (sessiya PDF) ga "AI o'zlashtirish tahlili" bo'limi qo'shildi (`APP.aiSummary` + `computeAiMastery`); maxsus apostroflar ASCII ga tozalanadi (helvetica uchun).
+- `saveSessionToHistory` entry'ga `aiMastery` qo'shildi.
+- `renderResult` dagi avto-trigger olib tashlandi (endi `finishSessionAI` boshqaradi).

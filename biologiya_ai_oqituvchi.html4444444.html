@@ -1855,13 +1855,16 @@ function endSession(){
   el("SESS-STATUS").textContent = "Yakunlandi";
   setAI("Sessiya yakunlandi", false);
   var tot=APP.ok+APP.no, pct=tot>0?Math.round(APP.ok/tot*100):0;
+  // AI ball o'rtachasi mavjud bo'lsa, o'zlashtirish shu asosda hisoblanadi
+  var aiM = computeAiMastery();
+  var masteryPct = (aiM!==null) ? aiM : pct;
 
-  // O'quvchi statistikasini yangilash
+  // O'quvchi statistikasini yangilash (AI ball o'rtachasi asosida)
   if(APP.currentStu){
     var stu = APP.students.find(function(s){ return s.id===APP.currentStu.id; });
     if(stu){
       stu.ses += 1;
-      stu.avg = stu.ses===1 ? pct : Math.round((stu.avg*(stu.ses-1) + pct)/stu.ses);
+      stu.avg = stu.ses===1 ? masteryPct : Math.round((stu.avg*(stu.ses-1) + masteryPct)/stu.ses);
       stu.stars = calcStars(stu.avg);
       stu.last = "Bugun";
     }
@@ -1874,8 +1877,17 @@ function endSession(){
   renderResult(pct, tot);
   toast("Sessiya yakunlandi! Natija: "+pct+"%");
   go("results");
-  // Ota-onaga Telegram xabar
-  sendParentNotification(pct, tot);
+  // AI tahlilni tayyorlab, keyin ota-onaga Telegram xabar yuborish
+  finishSessionAI(pct, tot, aiM);
+}
+
+// AI tahlilni tayyorlab (mavjud bo'lsa), so'ng ota-onaga xabar yuboradi
+async function finishSessionAI(pct, tot, aiM){
+  var summary = null;
+  if(getKey() && APP.res && APP.res.length){
+    try{ summary = await aiSessionAnalysis(); }catch(e){}
+  }
+  sendParentNotification(pct, tot, summary, aiM);
 }
 
 // ── HISTORY (LocalStorage) ────────────────────────────────
@@ -1898,6 +1910,7 @@ function saveSessionToHistory(pct, tot){
     total: tot,
     duration: el("TIMER") ? el("TIMER").textContent : "00:00",
     stars: calcStars(pct),
+    aiMastery: computeAiMastery(),
     res: APP.res.slice()
   };
   history.unshift(entry);
@@ -2677,7 +2690,6 @@ function renderResult(pct, tot){
   var b1=document.createElement("button"); b1.className="btn btn-primary"; b1.innerHTML="&#9654; Yangi sessiya"; b1.onclick=function(){go("session");};
   var b2=document.createElement("button"); b2.className="btn btn-secondary"; b2.innerHTML="&#128196; PDF Hisobot"; b2.onclick=exportPDF;
   btns.appendChild(b1); btns.appendChild(b2); cont.appendChild(btns);
-  if(getKey() && APP.res.length){ setTimeout(aiSessionAnalysis, 300); }
 }
 
 // ── AI SESSIYA TAHLILI (3-bosqich) ────────────────────────
@@ -2708,10 +2720,12 @@ async function aiSessionAnalysis(){
     APP.aiSummary=a;
     renderSessionAnalysis(a);
     saveAnalysisToHistory(a);
+    return a;
   }catch(e){
     if(body) body.textContent="Tahlil xatosi: "+e.message;
     var m=(e.message||"").toLowerCase();
     if(m.includes("auth")||m.includes("key")||m.includes("api")||m.includes("credit")) openModal(null);
+    return null;
   } finally { if(btn) btn.disabled=false; }
 }
 
@@ -2866,6 +2880,35 @@ async function exportPDF(){
       doc.text(doc.splitTextToSize("Javob: "+r.a,158)[0],21,y+13);
       y+=21;
     });
+
+    // AI o'zlashtirish tahlili
+    var aiM2 = computeAiMastery();
+    if(APP.aiSummary || aiM2!==null){
+      var sa = APP.aiSummary || {};
+      var clean = function(s){ return String(s||"").replace(/[\u02BB\u02BC\u2019\u2018`]/g,"'").replace(/[\u201C\u201D]/g,'"'); };
+      if(y>240){ doc.addPage(); y=20; }
+      doc.setTextColor(30,30,30); doc.setFontSize(12); doc.setFont("helvetica","bold");
+      doc.text("AI o'zlashtirish tahlili",10,y+4); y+=10;
+      doc.setFontSize(9);
+      var rows2 = [];
+      var dline = "Daraja: "+(sa.daraja?clean(sa.daraja):"-")+(sa.ball!=null?" ("+sa.ball+"%)":"")+(aiM2!==null?"   |   AI ball o'rtachasi: "+aiM2+"%":"");
+      rows2.push(["", dline]);
+      if(sa.kuchli) rows2.push(["Kuchli tomonlar: ", clean(sa.kuchli)]);
+      if(sa.zaif) rows2.push(["Zaif tomonlar: ", clean(sa.zaif)]);
+      if(sa.tavsiya) rows2.push(["Tavsiya: ", clean(sa.tavsiya)]);
+      rows2.forEach(function(p){
+        doc.setFont("helvetica", p[0]?"bold":"bold");
+        var full = (p[0]||"")+p[1];
+        var lines2 = doc.splitTextToSize(full,188);
+        lines2.forEach(function(ln,li){
+          if(y>280){ doc.addPage(); y=20; }
+          doc.setFont("helvetica", (li===0 && p[0])?"normal":"normal");
+          doc.setTextColor(40,40,40);
+          doc.text(ln,12,y); y+=5;
+        });
+        y+=1.5;
+      });
+    }
 
     // Footer
     var pc=doc.getNumberOfPages();
@@ -3275,7 +3318,7 @@ async function testTgBot(){
 }
 
 // Sessiya yakunida ota-onaga xabar yuborish
-async function sendParentNotification(pct, tot){
+async function sendParentNotification(pct, tot, summary, aiM){
   var parentIds = getParentIds();
   if(!APP.currentStu) return;
   var chatId = parentIds[APP.currentStu.id];
@@ -3294,12 +3337,22 @@ async function sendParentNotification(pct, tot){
     "Oquvchi: " + APP.currentStu.name + nl +
     (sinf ? "Sinf: " + sinf + nl : "") +
     "Natija: " + pct + "% - " + grade + nl +
+    (typeof aiM === "number" ? "AI ball o'rtachasi: " + aiM + "%" + nl : "") +
     "Reyting: " + stars + nl +
     "Togri: " + APP.ok + " ta" + nl +
     "Notogri: " + APP.no + " ta" + nl +
     "Vaqt: " + tstr + nl +
-    "Sana: " + today + nl + nl +
-    (localStorage.getItem("alc_teacher_name") ? "O'qituvchi: " + localStorage.getItem("alc_teacher_name") : "ALC O'quv Markazi");
+    "Sana: " + today + nl;
+
+  if(summary && (summary.daraja || summary.zaif || summary.tavsiya)){
+    msg += nl + "<b>AI tahlili:</b>" + nl +
+      (summary.daraja ? "Daraja: " + summary.daraja + (summary.ball!=null?" ("+summary.ball+"%)":"") + nl : "") +
+      (summary.kuchli ? "Kuchli: " + summary.kuchli + nl : "") +
+      (summary.zaif ? "Zaif: " + summary.zaif + nl : "") +
+      (summary.tavsiya ? "Tavsiya: " + summary.tavsiya + nl : "");
+  }
+
+  msg += nl + (localStorage.getItem("alc_teacher_name") ? "O'qituvchi: " + localStorage.getItem("alc_teacher_name") : "ALC O'quv Markazi");
 
   await sendTgMessage(chatId, msg);
 }
