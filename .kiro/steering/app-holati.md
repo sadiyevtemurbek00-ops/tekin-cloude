@@ -81,3 +81,27 @@
 ## Git
 - Branch: `colorful-redesign` (asosiy ish shu yerda).
 - `main` bilan birlashtirish uchun PR hali yaratilmagan (so'ralsa yaratiladi).
+
+
+---
+
+## YANGILANISH: AI savol-javob (1 & 2-bosqich) bajarildi
+
+### 1-bosqich (AI semantik baholash)
+- `#MIC-TXT` endi tahrirlanadigan `textarea` (yozish + ovoz).
+- `aiGrade()` — Claude'ga savol+to'g'ri javob+o'quvchi javobi yuboradi, JSON qaytaradi: `{ball, holat, izoh}`.
+- `parseAIEval(raw)` — JSON ni robust parse qiladi. `showEval(ev)` — `#AI-EVAL`/`#AI-EVAL-TXT` da rangli ball+izoh.
+- Tugma `#BTN-AI` ("AI baholash"). `markResult` natijaga `ball/holat/izoh/stuAns` qo'shadi (`APP.res` ga, hisobotlarda ko'rinadi).
+- Natija ekranida (`renderResult`) har savolga AI bali, o'quvchi javobi, izoh ko'rsatiladi.
+
+### 2-bosqich (Avto rejim — ovozli, avtomatik)
+- `APP.autoAI` (yoq/o'chiq), `APP.autoTimer`. Tugma `#AUTO-BTN` (`toggleAutoAI`, `refreshAutoBtn`).
+- Mic `REC.onend` → avto rejimda javob bo'lsa `aiGrade()` o'zi chaqiriladi.
+- `startAutoConfirm(sok)` — 4s hisob, keyin `markResult` avtomatik (o'qituvchi tugma bossa bekor).
+- `autoStartMic()` — keyingi savolda TTS o'qib bo'lgach mikrofonni avto yoqadi (avto-loop).
+- Baho threshold: `ball>=60` → to'g'ri.
+
+### Ma'lum cheklov / kelgusi
+- O'zbek STT (Web Speech `uz-UZ`) sifati cheklangan — 3-bosqichda Whisper STT ko'rib chiqilishi mumkin.
+- Avto rejimda TTS+mikrofon aks-sadosi bo'lishi mumkin (naushnik tavsiya etiladi).
+- Umumiy o'zlashtirish hozircha to'g'ri/noto'g'ri sanog'i (`pct`) asosida; kelajakda AI ballari o'rtachasi bilan aniqroq qilish mumkin.

@@ -887,6 +887,7 @@ body.dark .bg-deco span { opacity: .08; }
               &#127897; <span id="MIC-LBL">Javob yozish</span>
               <span id="MIC-DOT" style="display:none;position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--red);border-radius:50%;animation:pulse 1s infinite"></span>
             </button>
+            <button class="btn btn-ghost" onclick="toggleAutoAI()" id="AUTO-BTN" style="display:none">&#128260; Avto: O'chiq</button>
           </div>
         </div>
       </div>
@@ -1619,7 +1620,9 @@ function doStartSession(){
     APP.sec++;
     el("TIMER").textContent = pad(Math.floor(APP.sec/60))+":"+pad(APP.sec%60);
   }, 1000);
-  hide("BTN-S"); show("BTN-A"); show("BTN-E"); show("BTN-M");
+  hide("BTN-S"); show("BTN-A"); show("BTN-E"); show("BTN-M"); show("AUTO-BTN");
+  if(APP.autoAI===undefined) APP.autoAI=false;
+  APP.autoTimer=null; refreshAutoBtn();
   el("SESS-STATUS").textContent = "Faol";
   loadQ(0); updScore();
   toast("Sessiya boshlandi: " + (APP.currentStu ? APP.currentStu.name : ""));
@@ -1751,6 +1754,7 @@ async function aiGrade(){
     var sok = ev.ball >= 60;
     setAI("AI taklifi: "+(sok?"To'g'ri":"Noto'g'ri")+" — tasdiqlang yoki tuzating", false);
     toast((sok?"\u2705":"\u274C")+" AI taklifi: "+ev.ball+"% ("+ev.holat+")");
+    if(APP.autoAI) startAutoConfirm(sok);
   }catch(e){
     setAI("Baholashda xato", false);
     toast("AI xato: "+e.message);
@@ -1786,7 +1790,42 @@ function showEval(ev){
   box.style.display = "block";
 }
 
+// ── AVTO REJIM (2-bosqich) ────────────────────────────────
+function refreshAutoBtn(){
+  var b=el("AUTO-BTN"); if(!b) return;
+  b.innerHTML = APP.autoAI ? "\uD83D\uDD04 Avto: Yoniq" : "\uD83D\uDD04 Avto: O'chiq";
+  b.classList.toggle("btn-primary", !!APP.autoAI);
+  b.classList.toggle("btn-ghost", !APP.autoAI);
+}
+function toggleAutoAI(){
+  APP.autoAI = !APP.autoAI;
+  if(APP.autoTimer){ clearInterval(APP.autoTimer); APP.autoTimer=null; }
+  refreshAutoBtn();
+  toast(APP.autoAI ? "Avto-baholash yoqildi: o'quvchi gapirib bo'lgach AI o'zi baholaydi va o'tadi" : "Avto-baholash o'chirildi");
+}
+// AI bahosidan keyin avto-tasdiq (o'qituvchi tugmani bossa bekor bo'ladi)
+function startAutoConfirm(sok){
+  if(APP.autoTimer){ clearInterval(APP.autoTimer); APP.autoTimer=null; }
+  var n=4;
+  var msg=function(){ setAI("Avto: "+n+"s \u2014 "+(sok?"To'g'ri":"Noto'g'ri")+" (tuzatish uchun tugmani bosing)", false); };
+  msg();
+  APP.autoTimer=setInterval(function(){
+    n--;
+    if(n<=0){ clearInterval(APP.autoTimer); APP.autoTimer=null; markResult(sok); }
+    else msg();
+  },1000);
+}
+// Keyingi savolda mikrofonni avtomatik yoqish (TTS savolni o'qib bo'lgach)
+function autoStartMic(){
+  if(!(APP.autoAI && APP.active) || MIC_ON) return;
+  if(window.speechSynthesis && window.speechSynthesis.speaking){
+    setTimeout(autoStartMic, 600); return;
+  }
+  try{ startMic(); }catch(e){}
+}
+
 function markResult(isOk){
+  if(APP.autoTimer){ clearInterval(APP.autoTimer); APP.autoTimer=null; }
   var q=APP.qs[APP.qi];
   if(isOk) APP.ok++; else APP.no++;
   var entry = {q:q.q, a:q.a, ok:isOk};
@@ -1800,15 +1839,18 @@ function markResult(isOk){
   addLog(q.q, isOk); updScore();
   hide("BTN-OK"); hide("BTN-NO"); hide("BTN-AI");
   var ae=el("AI-EVAL"); if(ae) ae.style.display = "none";
-  if(APP.qi < APP.qs.length-1) show("BTN-NX");
-  else endSession();
+  if(APP.qi < APP.qs.length-1){
+    if(APP.autoAI){ setTimeout(function(){ nextQ(); setTimeout(autoStartMic, 1800); }, 700); }
+    else show("BTN-NX");
+  } else endSession();
 }
 
 function nextQ(){ APP.qi++; loadQ(APP.qi); }
 
 function endSession(){
   clearInterval(APP.ti); APP.active=false;
-  ["BTN-A","BTN-AI","BTN-OK","BTN-NO","BTN-NX","BTN-E","BTN-M"].forEach(hide);
+  if(APP.autoTimer){ clearInterval(APP.autoTimer); APP.autoTimer=null; }
+  ["BTN-A","BTN-AI","BTN-OK","BTN-NO","BTN-NX","BTN-E","BTN-M","AUTO-BTN"].forEach(hide);
   show("BTN-S");
   el("SESS-STATUS").textContent = "Yakunlandi";
   setAI("Sessiya yakunlandi", false);
@@ -2140,7 +2182,12 @@ function startMic(){
     }
     el("MIC-TXT").value=f||t;
   };
-  REC.onend=function(){ MIC_ON=false; el("MIC-LBL").textContent="Javob yozish"; el("MIC-DOT").style.display="none"; setAI("Kutilmoqda...",false); };
+  REC.onend=function(){
+    MIC_ON=false; el("MIC-LBL").textContent="Javob yozish"; el("MIC-DOT").style.display="none"; setAI("Kutilmoqda...",false);
+    if(APP.autoAI && APP.active && (el("MIC-TXT").value||"").trim() && !APP.lastEval){
+      aiGrade();
+    }
+  };
   REC.onerror=function(ev){ MIC_ON=false; el("MIC-LBL").textContent="Javob yozish"; el("MIC-DOT").style.display="none"; toast(ev.error==="not-allowed"?"Mikrofon ruxsati kerak":"Mikrofon xato: "+ev.error); };
   REC.start();
 }
