@@ -858,8 +858,13 @@ body.dark .bg-deco span { opacity: .08; }
           </div>
 
           <div class="mic-box" id="MIC-BOX">
-            <div class="mic-lbl">&#127897; O'quvchi javobi:</div>
-            <div class="mic-text" id="MIC-TXT"></div>
+            <div class="mic-lbl">&#127897; O'quvchi javobi (yozing yoki ovoz bilan ayting):</div>
+            <textarea class="mic-text" id="MIC-TXT" rows="2" placeholder="Javobni shu yerga yozing yoki '&#127897; Javob yozish' tugmasini bosib ayting..." style="width:100%;resize:vertical;border:none;background:transparent;font:inherit;color:inherit;outline:none;padding:0"></textarea>
+          </div>
+
+          <div class="ans-box" id="AI-EVAL" style="display:none;background:var(--blue-l);border-color:#BFDBFE">
+            <div class="ans-lbl">&#129302; AI bahosi:</div>
+            <div class="ans-text" id="AI-EVAL-TXT"></div>
           </div>
 
           <div class="q-progress">
@@ -873,6 +878,7 @@ body.dark .bg-deco span { opacity: .08; }
           <div class="sess-btns">
             <button class="btn btn-glow btn-lg" onclick="startSession()" id="BTN-S">&#9654; Boshlash</button>
             <button class="btn btn-ghost" onclick="showAnswer()" id="BTN-A" style="display:none">&#128065; Javobni ko'rsat</button>
+            <button class="btn btn-primary" onclick="aiGrade()" id="BTN-AI" style="display:none">&#129302; AI baholash</button>
             <button class="btn btn-success" onclick="markResult(true)" id="BTN-OK" style="display:none">&#10003; To'g'ri</button>
             <button class="btn btn-danger" onclick="markResult(false)" id="BTN-NO" style="display:none">&#10007; Noto'g'ri</button>
             <button class="btn btn-ghost" onclick="nextQ()" id="BTN-NX" style="display:none">&#8594; Keyingi</button>
@@ -1697,8 +1703,11 @@ function loadQ(i){
   el("Q-NUM").textContent = "Savol "+(i+1)+" / "+APP.qs.length;
   el("Q-TXT").textContent = q.q;
   el("ANS-BOX").style.display = "none";
-  el("MIC-BOX").style.display = "none";
-  hide("BTN-OK"); hide("BTN-NO"); hide("BTN-NX"); show("BTN-A");
+  el("MIC-BOX").style.display = "block";
+  el("MIC-TXT").value = "";
+  var ae=el("AI-EVAL"); if(ae) ae.style.display = "none";
+  APP.lastEval = null;
+  hide("BTN-OK"); hide("BTN-NO"); hide("BTN-NX"); show("BTN-A"); show("BTN-AI");
   setAI("Savol oqulmoqda...", true);
   if(APP.tts) speak(q.q);
   updProg();
@@ -1708,17 +1717,89 @@ function showAnswer(){
   var q=APP.qs[APP.qi];
   el("ANS-TXT").textContent = q.a;
   el("ANS-BOX").style.display = "block";
-  hide("BTN-A"); show("BTN-OK"); show("BTN-NO");
+  hide("BTN-A"); hide("BTN-AI"); show("BTN-OK"); show("BTN-NO");
   setAI("Javob oqulmoqda...", true);
   if(APP.tts) speak(q.a);
+}
+
+// ── AI BAHOLASH (1-bosqich) ───────────────────────────────
+async function aiGrade(){
+  if(!APP.active) return;
+  var ans = (el("MIC-TXT").value||"").trim();
+  if(!ans){ toast("Avval o'quvchi javobini kiriting (yozing yoki ovoz bilan)"); el("MIC-TXT").focus(); return; }
+  if(!getKey()){ openModal(aiGrade); return; }
+  var q = APP.qs[APP.qi];
+  setAI("AI javobni baholamoqda...", true);
+  var btn = el("BTN-AI"); if(btn) btn.disabled = true;
+  var prompt =
+    "Sen tajribali biologiya o'qituvchisining yordamchisisan. O'quvchining og'zaki javobini adolatli baholaysan. "+
+    "To'g'ri javob bilan ma'no jihatdan solishtir: sinonim, boshqacha so'z bilan aytilgan, qisman to'g'ri javoblarni ham hisobga ol. "+
+    "FAQAT JSON qaytar, boshqa hech narsa yozma. Format aniq shunday bo'lsin: "+
+    "{\"ball\": <0 dan 100 gacha butun son>, \"holat\": \"to'g'ri\" yoki \"qisman\" yoki \"noto'g'ri\", \"izoh\": \"<1-2 gaplik qisqa o'zbekcha izoh: nima to'g'ri, nima yetishmadi>\"}\n\n"+
+    "SAVOL: "+q.q+"\n"+
+    "TO'G'RI JAVOB: "+q.a+"\n"+
+    "O'QUVCHI JAVOBI: "+ans;
+  try{
+    var raw = await callAI(prompt);
+    var ev = parseAIEval(raw);
+    APP.lastEval = ev;
+    showEval(ev);
+    // To'g'ri javobni ko'rsatish + qo'lda tasdiqlash/tuzatish
+    el("ANS-TXT").textContent = q.a;
+    el("ANS-BOX").style.display = "block";
+    hide("BTN-A"); hide("BTN-AI"); show("BTN-OK"); show("BTN-NO");
+    var sok = ev.ball >= 60;
+    setAI("AI taklifi: "+(sok?"To'g'ri":"Noto'g'ri")+" — tasdiqlang yoki tuzating", false);
+    toast((sok?"\u2705":"\u274C")+" AI taklifi: "+ev.ball+"% ("+ev.holat+")");
+  }catch(e){
+    setAI("Baholashda xato", false);
+    toast("AI xato: "+e.message);
+    var m=(e.message||"").toLowerCase();
+    if(m.includes("auth")||m.includes("key")||m.includes("api")||m.includes("credit")) openModal(null);
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+
+function parseAIEval(raw){
+  var ball=0, holat="noma'lum", izoh="";
+  try{
+    var m = String(raw).match(/\{[\s\S]*\}/);
+    var o = JSON.parse(m ? m[0] : raw);
+    ball = parseInt(o.ball); if(isNaN(ball)) ball=0;
+    ball = Math.max(0, Math.min(100, ball));
+    holat = o.holat || (ball>=86?"to'g'ri":ball>=50?"qisman":"noto'g'ri");
+    izoh = o.izoh || "";
+  }catch(e){
+    izoh = String(raw).substring(0,200);
+    ball = 0; holat = "noma'lum";
+  }
+  return {ball:ball, holat:holat, izoh:izoh};
+}
+
+function showEval(ev){
+  var box=el("AI-EVAL"), txt=el("AI-EVAL-TXT");
+  if(!box||!txt) return;
+  var color = ev.ball>=86?"#16B981":ev.ball>=50?"#F59E0B":"#EF4444";
+  txt.innerHTML = "<span style='font-weight:800;color:"+color+"'>"+ev.ball+"% \u2014 "+ev.holat+"</span>"+
+    (ev.izoh ? "<br><span style='color:var(--text2)'>"+ev.izoh+"</span>" : "");
+  box.style.display = "block";
 }
 
 function markResult(isOk){
   var q=APP.qs[APP.qi];
   if(isOk) APP.ok++; else APP.no++;
-  APP.res.push({q:q.q, a:q.a, ok:isOk});
+  var entry = {q:q.q, a:q.a, ok:isOk};
+  if(APP.lastEval){
+    entry.ball = APP.lastEval.ball;
+    entry.holat = APP.lastEval.holat;
+    entry.izoh = APP.lastEval.izoh;
+    entry.stuAns = (el("MIC-TXT").value||"").trim();
+  }
+  APP.res.push(entry);
   addLog(q.q, isOk); updScore();
-  hide("BTN-OK"); hide("BTN-NO");
+  hide("BTN-OK"); hide("BTN-NO"); hide("BTN-AI");
+  var ae=el("AI-EVAL"); if(ae) ae.style.display = "none";
   if(APP.qi < APP.qs.length-1) show("BTN-NX");
   else endSession();
 }
@@ -1727,7 +1808,7 @@ function nextQ(){ APP.qi++; loadQ(APP.qi); }
 
 function endSession(){
   clearInterval(APP.ti); APP.active=false;
-  ["BTN-A","BTN-OK","BTN-NO","BTN-NX","BTN-E","BTN-M"].forEach(hide);
+  ["BTN-A","BTN-AI","BTN-OK","BTN-NO","BTN-NX","BTN-E","BTN-M"].forEach(hide);
   show("BTN-S");
   el("SESS-STATUS").textContent = "Yakunlandi";
   setAI("Sessiya yakunlandi", false);
@@ -2048,7 +2129,7 @@ function startMic(){
   REC.onstart=function(){
     MIC_ON=true; el("MIC-LBL").textContent="Tinglayapti...";
     el("MIC-DOT").style.display="block"; el("MIC-BOX").style.display="block";
-    el("MIC-TXT").textContent="...";
+    el("MIC-TXT").value="";
     setAI("Oquvchi javobini eshitmoqda...", true);
   };
   REC.onresult=function(e){
@@ -2057,7 +2138,7 @@ function startMic(){
       if(e.results[i].isFinal) f+=e.results[i][0].transcript;
       else t+=e.results[i][0].transcript;
     }
-    el("MIC-TXT").textContent=f||t;
+    el("MIC-TXT").value=f||t;
   };
   REC.onend=function(){ MIC_ON=false; el("MIC-LBL").textContent="Javob yozish"; el("MIC-DOT").style.display="none"; setAI("Kutilmoqda...",false); };
   REC.onerror=function(ev){ MIC_ON=false; el("MIC-LBL").textContent="Javob yozish"; el("MIC-DOT").style.display="none"; toast(ev.error==="not-allowed"?"Mikrofon ruxsati kerak":"Mikrofon xato: "+ev.error); };
@@ -2511,8 +2592,19 @@ function renderResult(pct, tot){
     var ic=document.createElement("span"); ic.textContent=r.ok?"✅":"❌"; ic.style.flexShrink="0";
     var info=document.createElement("div");
     var qt=document.createElement("div"); qt.style.cssText="font-size:13px;font-weight:600;color:var(--text)"; qt.textContent=(i+1)+". "+r.q;
-    var at=document.createElement("div"); at.style.cssText="font-size:12px;color:var(--text3);margin-top:3px"; at.textContent=r.a;
-    info.appendChild(qt); info.appendChild(at); row.appendChild(ic); row.appendChild(info); det.appendChild(row);
+    var at=document.createElement("div"); at.style.cssText="font-size:12px;color:var(--text3);margin-top:3px"; at.textContent="To'g'ri javob: "+r.a;
+    info.appendChild(qt); info.appendChild(at);
+    if(r.stuAns){
+      var sa=document.createElement("div"); sa.style.cssText="font-size:12px;color:var(--text2);margin-top:3px"; sa.textContent="O'quvchi: "+r.stuAns;
+      info.appendChild(sa);
+    }
+    if(typeof r.ball === "number"){
+      var ai=document.createElement("div"); ai.style.cssText="font-size:12px;margin-top:4px;font-weight:600";
+      var col=r.ball>=86?"#16B981":r.ball>=50?"#F59E0B":"#EF4444";
+      ai.innerHTML="&#129302; AI: <span style='color:"+col+"'>"+r.ball+"% ("+(r.holat||"")+")</span>"+(r.izoh?" — <span style='font-weight:400;color:var(--text3)'>"+r.izoh+"</span>":"");
+      info.appendChild(ai);
+    }
+    row.appendChild(ic); row.appendChild(info); det.appendChild(row);
   });
   cont.appendChild(det);
 
