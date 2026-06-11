@@ -964,6 +964,12 @@ body.dark .bg-deco span { opacity: .08; }
           </div>
           <div id="QA-ED"></div>
           <div class="divider"></div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <label style="font-size:12px;color:var(--text3);margin:0">Savollar soni:</label>
+            <select id="GEN-COUNT" style="width:80px">
+              <option>3</option><option selected>5</option><option>7</option><option>10</option>
+            </select>
+          </div>
           <button class="btn btn-primary" onclick="genQA()" style="width:100%">
             <span id="GEN-IC">&#10024;</span> AI bilan savollar yaratish
           </button>
@@ -1037,6 +1043,22 @@ body.dark .bg-deco span { opacity: .08; }
     <div class="card" style="margin-top:20px">
       <div style="font-size:14px;font-weight:600;margin-bottom:14px">O'zlashtirish grafigi</div>
       <div style="position:relative;height:240px"><canvas id="ST-CHART"></canvas></div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">&#9729;&#65039; Bulutli zaxira (Firebase)</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Ma'lumotlarni (o'quvchilar, tarix, sozlamalar) bulutda saqlang va boshqa qurilmada tiklang. Firebase loyihangiz kerak (bepul).</div>
+      <div class="fg"><label>Firebase config (JSON)</label><textarea id="FB-CONFIG" rows="3" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'></textarea></div>
+      <div class="fg"><label>Sinxron kodi (maxfiy — bir xil kod = bir xil ma'lumot)</label><input type="text" id="FB-CODE" placeholder="masalan: alc-temurbek-2026"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="saveFbConfig()">&#128190; Sozlamani saqlash</button>
+        <button class="btn btn-primary" onclick="cloudBackup()">&#11014;&#65039; Bulutga saqlash</button>
+        <button class="btn btn-secondary" onclick="cloudRestore()">&#11015;&#65039; Bulutdan yuklash</button>
+      </div>
+      <div id="FB-STATUS" style="font-size:12px;margin-top:10px"></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6">
+        Sozlash: <b>console.firebase.google.com</b> &rarr; loyiha yarating &rarr; Firestore Database yoqing &rarr; Web app qo'shing &rarr; config'ni yuqoriga joylang.
+      </div>
     </div>
   </div>
 
@@ -2411,19 +2433,42 @@ async function genQA(){
   var btn=document.querySelector('[onclick="genQA()"]');
   btn.innerHTML='<span class="spin"></span> Yaratilmoqda...'; btn.disabled=true;
   try{
-    var raw=await callAI('Quyidagi biologiya mavzusi asosida 5 ta savol-javob yarating. Faqat JSON formatida qaytaring:\n[{"q":"savol","a":"javob"}]\n\nMavzu: '+txt);
+    var nq = el("GEN-COUNT") ? (parseInt(el("GEN-COUNT").value)||5) : 5;
+    var raw=await callAI('Quyidagi biologiya mavzusi asosida '+nq+' ta savol-javob yarating. Javoblar aniq va qisqa o\'zbekcha bo\'lsin. FAQAT JSON massiv qaytaring, boshqa matn yozmang:\n[{"q":"savol","a":"javob"}]\n\nMavzu: '+txt);
     var clean=raw.replace(/```json|```/g,"").trim();
-    var qas=JSON.parse(clean);
-    el("QA-ED").innerHTML="";
-    qas.forEach(function(qa){ addQRow(qa.q,qa.a); });
-    toast("AI "+qas.length+" ta savol yaratdi!");
+    var m=clean.match(/\[[\s\S]*\]/);
+    var qas=JSON.parse(m?m[0]:clean);
+    if(!Array.isArray(qas)||!qas.length){ toast("AI savol qaytarmadi, qayta urinib ko'ring"); }
+    else{
+      el("QA-ED").innerHTML="";
+      qas.forEach(function(qa){ if(qa&&qa.q) addQRow(qa.q,qa.a||""); });
+      toast("AI "+qas.length+" ta savol yaratdi!");
+    }
   } catch(e){ toast("Xato: "+e.message); }
   btn.innerHTML='&#10024; AI bilan savollar yaratish'; btn.disabled=false;
 }
 
 // ── STUDENTS ──────────────────────────────────────────────
+// Gamifikatsiya: daraja va nishonlar
+function studentLevel(avg){
+  if(avg>=90) return {name:"Oltin", icon:"\uD83C\uDFC6", bg:"#FEF3C7", fg:"#92400E"};
+  if(avg>=75) return {name:"Kumush", icon:"\uD83E\uDD48", bg:"#E5E7EB", fg:"#374151"};
+  if(avg>=60) return {name:"Bronza", icon:"\uD83E\uDD49", bg:"#FDE9D9", fg:"#9A3412"};
+  return {name:"Boshlang'ich", icon:"\uD83C\uDF31", bg:"#DCFCE7", fg:"#166534"};
+}
+function studentBadges(s){
+  var b=[];
+  if(s.avg>=95) b.push({icon:"\uD83D\uDC51", title:"Bilim shohi (95%+)"});
+  if(s.avg>=86) b.push({icon:"\u2B50", title:"A'lochi (o'rtacha 86%+)"});
+  if((s.stars||0)>=5) b.push({icon:"\uD83C\uDF1F", title:"5 yulduz"});
+  if(s.ses>=10) b.push({icon:"\uD83D\uDD25", title:"Faol (10+ sessiya)"});
+  else if(s.ses>=5) b.push({icon:"\uD83D\uDCAA", title:"Tirishqoq (5+ sessiya)"});
+  return b;
+}
+
 function renderStudents(){
   var list=el("ST-LIST"); if(!list) return;
+  renderFbInputs();
   list.innerHTML="";
 
   // Natijaga qarab tartiblash (yuqoridan pastga)
@@ -2450,6 +2495,19 @@ function renderStudents(){
     var info=document.createElement("div"); info.style.flex="1";
     var nm=document.createElement("div"); nm.style.cssText="font-size:14px;font-weight:600"; nm.textContent=s.name;
 
+    // Gamifikatsiya: daraja chipi
+    var lvl=studentLevel(pct);
+    var lvlChip=document.createElement("span");
+    lvlChip.textContent=lvl.icon+" "+lvl.name;
+    lvlChip.style.cssText="display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;background:"+lvl.bg+";color:"+lvl.fg;
+    nm.appendChild(lvlChip);
+    // Top-3 medali
+    if(s.rank>=1 && s.rank<=3){
+      var medal=document.createElement("span");
+      medal.textContent=["\uD83E\uDD47","\uD83E\uDD48","\uD83E\uDD49"][s.rank-1]+" ";
+      nm.insertBefore(medal, nm.firstChild);
+    }
+
     var starsDiv=document.createElement("div"); starsDiv.className="stars"; starsDiv.style.margin="4px 0";
     starsDiv.innerHTML=starsHTML(s.stars,"star-sm");
 
@@ -2461,6 +2519,18 @@ function renderStudents(){
     pb.appendChild(pf);
 
     info.appendChild(nm); info.appendChild(starsDiv); info.appendChild(sub); info.appendChild(pb);
+
+    // Gamifikatsiya: nishonlar qatori
+    var badges=studentBadges(s);
+    if(badges.length){
+      var brow=document.createElement("div"); brow.style.cssText="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap";
+      badges.forEach(function(bd){
+        var chip=document.createElement("span"); chip.textContent=bd.icon; chip.title=bd.title;
+        chip.style.cssText="font-size:14px;cursor:default";
+        brow.appendChild(chip);
+      });
+      info.appendChild(brow);
+    }
 
     var sc=document.createElement("div"); sc.style.textAlign="right";
     var sv=document.createElement("div"); sv.style.cssText="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:"+col; sv.textContent=pct+"%";
@@ -3727,6 +3797,73 @@ function renderLibrary(){
 
     list.appendChild(card);
   });
+}
+
+// ── BULUTLI ZAXIRA (Firebase) ─────────────────────────────
+function getFbConfig(){ try{ return JSON.parse(localStorage.getItem("alc_fb_config")||"null"); }catch(e){ return null; } }
+function getFbCode(){ return localStorage.getItem("alc_fb_code")||""; }
+function fbStatus(m, ok){ var e=el("FB-STATUS"); if(e){ e.textContent=(ok?"\u2705 ":"\u274C ")+m; e.style.color=ok?"#065F46":"#991B1B"; } }
+function renderFbInputs(){
+  var c=el("FB-CONFIG"); if(c && !c.value) c.value=localStorage.getItem("alc_fb_config")||"";
+  var k=el("FB-CODE"); if(k && !k.value) k.value=getFbCode();
+}
+function saveFbConfig(){
+  var raw=(el("FB-CONFIG").value||"").trim(), code=(el("FB-CODE").value||"").trim();
+  if(!raw){ fbStatus("Firebase config kiriting", false); return; }
+  try{ JSON.parse(raw); }catch(e){ fbStatus("Config noto'g'ri JSON formatda", false); return; }
+  localStorage.setItem("alc_fb_config", raw);
+  localStorage.setItem("alc_fb_code", code);
+  FB_DB=null; // qayta init uchun
+  fbStatus("Sozlama saqlandi", true);
+}
+var FB_DB=null;
+async function ensureFirebase(){
+  var cfg=getFbConfig();
+  if(!cfg){ fbStatus("Avval Firebase config saqlang", false); return null; }
+  if(FB_DB) return FB_DB;
+  try{
+    await loadScriptOnce("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
+    await loadScriptOnce("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js");
+  }catch(e){ fbStatus("Firebase SDK yuklanmadi (internetni tekshiring)", false); return null; }
+  if(!window.firebase || !window.firebase.firestore){ fbStatus("Firebase SDK mavjud emas", false); return null; }
+  try{
+    (window.firebase.apps && window.firebase.apps.length) ? window.firebase.app() : window.firebase.initializeApp(cfg);
+    FB_DB = window.firebase.firestore();
+    return FB_DB;
+  }catch(e){ fbStatus("Firebase init xatosi: "+e.message, false); return null; }
+}
+function cloudKeys(){
+  var keys=[];
+  for(var i=0;i<localStorage.length;i++){
+    var k=localStorage.key(i);
+    if(k && k.indexOf("alc_")===0 && k!=="alc_bio_key" && k!=="alc_fb_config" && k!=="alc_fb_code") keys.push(k);
+  }
+  return keys;
+}
+async function cloudBackup(){
+  var code=getFbCode(); if(!code){ fbStatus("Sinxron kodini kiriting va saqlang", false); return; }
+  var db=await ensureFirebase(); if(!db) return;
+  fbStatus("Bulutga saqlanmoqda...", true);
+  var data={}; cloudKeys().forEach(function(k){ var v=localStorage.getItem(k); if(v!=null) data[k]=v; });
+  try{
+    await db.collection("alc_backups").doc(code).set({ data:data, updatedAt:new Date().toISOString() });
+    fbStatus("Bulutga saqlandi ("+new Date().toLocaleString("uz-UZ")+")", true);
+    toast("Ma'lumotlar bulutga saqlandi");
+  }catch(e){ fbStatus("Saqlash xatosi: "+e.message, false); }
+}
+async function cloudRestore(){
+  var code=getFbCode(); if(!code){ fbStatus("Sinxron kodini kiriting va saqlang", false); return; }
+  if(!confirm("Bulutdagi ma'lumot hozirgi ma'lumotlar ustiga yoziladi. Davom etasizmi?")) return;
+  var db=await ensureFirebase(); if(!db) return;
+  fbStatus("Bulutdan yuklanmoqda...", true);
+  try{
+    var doc=await db.collection("alc_backups").doc(code).get();
+    if(!doc.exists){ fbStatus("Bu kod uchun bulutda ma'lumot topilmadi", false); return; }
+    var data=(doc.data()||{}).data||{};
+    Object.keys(data).forEach(function(k){ localStorage.setItem(k, data[k]); });
+    fbStatus("Yuklandi! Sahifa yangilanmoqda...", true);
+    setTimeout(function(){ location.reload(); }, 1200);
+  }catch(e){ fbStatus("Yuklash xatosi: "+e.message, false); }
 }
 
 // ── STUDENTS LOCALSTORAGE ─────────────────────────────────

@@ -134,3 +134,17 @@
   - `computeAiMastery`: `sum(ball yoki manual 100/0) / totalQ` (javob berilmagan = 0).
   - `exportPDF`: pct total asosida, "Jami savol" = totalQ.
   - Sessiya to'liq yakunlanmasa ham (erta "Yakunlash") natija to'g'ri: masalan 3/5 = 60%.
+
+
+
+### YANGILANISH: Kuchaytirish to'plami (Pages, Firebase, gamifikatsiya, AI generator+, grafik)
+- **AI savol generatori (genQA)** allaqachon bor edi; `#GEN-COUNT` (savol soni) va robust JSON parse qo'shildi.
+- **Progress grafiklari** allaqachon bor (`renderAnalysis` -> `AN-CHART` line chart + mavzu barlari).
+- **Gamifikatsiya:** `studentLevel(avg)` (Oltin/Kumush/Bronza/Boshlang'ich) va `studentBadges(s)` (👑⭐🌟🔥💪). `renderStudents` da daraja chipi, top-3 medal (🥇🥈🥉), nishonlar qatori.
+- **GitHub Pages:** root `index.html` -> `biologiya_ai_oqituvchi.html4444444.html` ga redirect.
+- **Firebase bulutli zaxira (Item 2):** `getFbConfig/getFbCode/saveFbConfig/ensureFirebase/cloudBackup/cloudRestore`, SDK `loadScriptOnce` orqali (firebase 10.12.2 compat). `alc_` localStorage kalitlari Firestore `alc_backups/{kod}` ga sinxron (alc_bio_key/fb_config/fb_code bundan mustasno). UI: O'quvchilar sektsiyasida karta (`#FB-CONFIG`, `#FB-CODE`, `#FB-STATUS`). Config kiritilmasa inert — eski ishni buzmaydi. JONLI TEST QILINMAGAN (foydalanuvchining Firebase loyihasi kerak).
+- localStorage kalitlari: alc_students, alc_bio_history, alc_test_results, alc_parent_ids, alc_teacher_name, alc_library, alc_tg_token, alc_report_chat_id, alc_bio_key(maxfiy), alc_fb_config, alc_fb_code, alc_theme.
+
+### KEYINGI (kelishilgan, hali bajarilmagan)
+- Item 4: Mavzu bo'yicha test banki.
+- Item 8: Eksport/Import (JSON/Excel zaxira-tiklash).
