@@ -1850,6 +1850,7 @@ function nextQ(){ APP.qi++; loadQ(APP.qi); }
 function endSession(){
   clearInterval(APP.ti); APP.active=false;
   if(APP.autoTimer){ clearInterval(APP.autoTimer); APP.autoTimer=null; }
+  releaseMic();
   ["BTN-A","BTN-AI","BTN-OK","BTN-NO","BTN-NX","BTN-E","BTN-M","AUTO-BTN"].forEach(hide);
   show("BTN-S");
   el("SESS-STATUS").textContent = "Yakunlandi";
@@ -2177,17 +2178,27 @@ function stopVoiceReport(){
 // ── MIC ───────────────────────────────────────────────────
 var REC=null, MIC_ON=false;
 var MIC_LANGS=["uz-UZ","ru-RU","en-US"], MIC_LANG_IDX=0;
-function toggleMic(){
-  if(!("webkitSpeechRecognition" in window||"SpeechRecognition" in window)){
-    toast("Ovozli kiritish qo'llab-quvvatlanmaydi. Chrome yoki Edge ishlatilsin"); return;
+
+// Sessiya boshida mikrofon ruxsatini bir marta olib, oqimni ochiq saqlaymiz.
+// Shunda har javobda qayta ruxsat so'ralmaydi (Edge muammosi hal bo'ladi).
+function primeMic(){
+  if(APP.micStream) return;
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+      APP.micStream=stream; // sessiya davomida ochiq qoladi -> ruxsat saqlanadi
+    }).catch(function(){ /* foydalanuvchi rad etsa yoki qo'llab-quvvatlanmasa, jim o'tamiz */ });
   }
-  MIC_ON ? stopMic() : startMic();
 }
-function startMic(){
+function releaseMic(){
+  if(APP.micStream){ try{ APP.micStream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} APP.micStream=null; }
+}
+
+// Bitta recognition obyektini yaratib qayta ishlatamiz (har safar yangi yaratish qayta so'rovga sabab bo'ladi)
+function ensureREC(){
+  if(REC) return REC;
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ toast("Brauzer ovozli kiritishni qo'llab-quvvatlamaydi (Chrome tavsiya etiladi)"); return; }
+  if(!SR) return null;
   REC=new SR();
-  REC.lang=MIC_LANGS[MIC_LANG_IDX]||"uz-UZ";
   REC.continuous=false; REC.interimResults=true;
   REC.onstart=function(){
     MIC_ON=true; el("MIC-LBL").textContent="Tinglayapti...";
@@ -2219,12 +2230,25 @@ function startMic(){
       return;
     }
     if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){
-      toast("Mikrofon ruxsati kerak. Edge: Sozlamalar > Maxfiylik > 'Onlayn nutqni aniqlash' yoqilsin"); return;
+      toast("Mikrofon ruxsati kerak. Edge: Sozlamalar > Cookie va sayt ruxsatlari > Mikrofon — saytga 'Ruxsat'"); return;
     }
     if(ev.error==="no-speech"){ toast("Ovoz eshitilmadi, qaytadan urinib ko'ring"); return; }
     toast("Mikrofon xato: "+ev.error);
   };
-  try{ REC.start(); }catch(e){ MIC_ON=false; toast("Mikrofonni boshlab bo'lmadi: "+e.message); }
+  return REC;
+}
+function toggleMic(){
+  if(!("webkitSpeechRecognition" in window||"SpeechRecognition" in window)){
+    toast("Ovozli kiritish qo'llab-quvvatlanmaydi. Chrome yoki Edge ishlatilsin"); return;
+  }
+  MIC_ON ? stopMic() : startMic();
+}
+function startMic(){
+  var r=ensureREC();
+  if(!r){ toast("Brauzer ovozli kiritishni qo'llab-quvvatlamaydi (Chrome tavsiya etiladi)"); return; }
+  primeMic(); // ruxsat hali olinmagan bo'lsa, bir marta so'raydi va oqimni ochiq tutadi
+  r.lang=MIC_LANGS[MIC_LANG_IDX]||"uz-UZ";
+  try{ r.start(); }catch(e){ /* allaqachon ishlayotgan bo'lsa e'tiborsiz qoldiramiz */ }
 }
 function stopMic(){ if(REC){ try{ REC.stop(); }catch(e){} } MIC_ON=false; }
 
