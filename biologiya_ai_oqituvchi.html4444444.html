@@ -790,6 +790,10 @@ body.dark .bg-deco span { opacity: .08; }
       <span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span> Takrorlash jadvali
       <span class="ni-badge" id="REPEAT-BADGE" style="display:none">0</span>
     </button>
+    <button class="ni" onclick="go('homework')" id="N-homework">
+      <span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13l2 2 4-4"/></svg></span> Uy vazifasi
+      <span class="ni-badge" id="HW-BADGE" style="display:none">0</span>
+    </button>
   </div>
   <div class="sb-foot">
     <img id="L2" src="" alt="ALC">
@@ -848,7 +852,10 @@ body.dark .bg-deco span { opacity: .08; }
           </div>
 
           <div class="q-card">
-            <div class="q-num" id="Q-NUM">Savol &#8212; / &#8212;</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+              <div class="q-num" id="Q-NUM" style="margin-bottom:0">Savol &#8212; / &#8212;</div>
+              <span class="badge" id="Q-DIFF" style="display:none"></span>
+            </div>
             <div class="q-text" id="Q-TXT">Sessiyani boshlash uchun "Boshlash" tugmasini bosing yoki avval mavzu yuklab, savollarni kiriting.</div>
           </div>
 
@@ -871,6 +878,9 @@ body.dark .bg-deco span { opacity: .08; }
           </div>
 
           <div class="sess-btns">
+            <label id="ADAPT-WRAP" style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:rgba(255,255,255,.8);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:7px 12px;border-radius:9px;cursor:pointer" title="AI o'quvchi javoblariga qarab savol qiyinligini moslaydi">
+              <input type="checkbox" id="ADAPT-TG" checked style="width:auto;accent-color:var(--cyan)"> &#9889; Adaptiv qiyinlik
+            </label>
             <button class="btn btn-glow btn-lg" onclick="startSession()" id="BTN-S">&#9654; Boshlash</button>
             <button class="btn btn-ghost" onclick="showAnswer()" id="BTN-A" style="display:none">&#128065; Javobni ko'rsat</button>
             <button class="btn btn-success" onclick="markResult(true)" id="BTN-OK" style="display:none">&#10003; To'g'ri</button>
@@ -1420,6 +1430,26 @@ body.dark .bg-deco span { opacity: .08; }
     </div>
   </div>
 
+  <!-- ===== HOMEWORK ===== -->
+  <div class="scr" id="SCR-homework">
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">Uy vazifasi</div>
+        <div class="sec-sub">O'quvchiga vazifa yuboring — u uyda bajaradi, natija avtomatik tushadi</div>
+      </div>
+      <button class="btn btn-primary btn-lg" onclick="openHwModal()">+ Yangi uy vazifasi</button>
+    </div>
+
+    <div class="g4" style="margin-bottom:18px">
+      <div class="stat-card"><div class="stat-icon">📨</div><div class="stat-val" id="HW-S-TOTAL">0</div><div class="stat-lbl">Jami vazifa</div></div>
+      <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-val" id="HW-S-PENDING">0</div><div class="stat-lbl">Bajarilmagan</div></div>
+      <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val" id="HW-S-DONE">0</div><div class="stat-lbl">Bajarilgan</div></div>
+      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-val" id="HW-S-AVG">—</div><div class="stat-lbl">O'rtacha natija</div></div>
+    </div>
+
+    <div id="HW-LIST"></div>
+  </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /shell -->
@@ -1493,6 +1523,73 @@ body.dark .bg-deco span { opacity: .08; }
   </div>
 </div>
 
+<!-- HOMEWORK CREATE MODAL -->
+<div class="modal" id="HW-MOD">
+  <div class="modal-box" style="max-width:560px;max-height:90vh;overflow-y:auto">
+    <div style="font-size:17px;font-weight:700;margin-bottom:4px">📝 Yangi uy vazifasi</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:16px">O'quvchini tanlang va savollarni kiriting</div>
+
+    <div class="g2">
+      <div class="fg">
+        <label>O'quvchi *</label>
+        <select id="HW-STU" style="width:100%"></select>
+      </div>
+      <div class="fg">
+        <label>Muddat (deadline)</label>
+        <input type="date" id="HW-DUE" style="width:100%">
+      </div>
+    </div>
+    <div class="fg"><label>Vazifa nomi *</label><input type="text" id="HW-TITLE" placeholder="Masalan: Fotosintez — uy vazifasi"></div>
+
+    <div class="fg">
+      <label>Kutubxonadan savollarni yuklash</label>
+      <div style="display:flex;gap:8px">
+        <select id="HW-BOOK" style="flex:1"></select>
+        <button class="btn btn-secondary" onclick="loadHwBookQA()" style="white-space:nowrap">Yuklash</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700">Savol-javoblar</div>
+      <button class="btn btn-secondary" onclick="addHwQARow()" style="font-size:12px;padding:6px 11px">+ Savol</button>
+    </div>
+    <div id="HW-QA-ED" style="max-height:260px;overflow-y:auto"></div>
+
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-primary btn-lg" onclick="saveHomework()" style="flex:1">📨 Yuborish</button>
+      <button class="btn btn-secondary" onclick="closeHwModal()">Bekor</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOMEWORK DO MODAL -->
+<div class="modal" id="HW-DO-MOD">
+  <div class="modal-box" style="max-width:520px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="font-size:17px;font-weight:700" id="HWD-TITLE">Uy vazifasi</div>
+      <span class="badge badge-cyan" id="HWD-COUNT">1 / 1</span>
+    </div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:14px" id="HWD-SUB">O'quvchi uchun</div>
+
+    <div class="q-card" style="background:var(--gray-50);border:1px solid var(--border)">
+      <div class="q-text" id="HWD-Q" style="color:var(--text);font-size:16px"></div>
+      <div class="ans-box" id="HWD-ANS-BOX" style="background:var(--green-l);border:1px solid #BBF7D0">
+        <div class="ans-lbl" style="color:var(--green-d)">✓ To'g'ri javob:</div>
+        <div class="ans-text" id="HWD-ANS" style="color:var(--text)"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+      <button class="btn btn-ghost" style="background:var(--gray-100);color:var(--text)" onclick="hwdReveal()" id="HWD-SHOW">👁 Javobni ko'rsat</button>
+      <button class="btn btn-success" onclick="hwdMark(true)" id="HWD-OK" style="display:none">✓ Bildim</button>
+      <button class="btn btn-danger" onclick="hwdMark(false)" id="HWD-NO" style="display:none">✗ Bilmadim</button>
+      <button class="btn btn-secondary" onclick="closeHwDoModal()" style="margin-left:auto">Yopish</button>
+    </div>
+  </div>
+</div>
+
 <!-- API MODAL -->
 <div class="modal" id="API-MOD">
   <div class="modal-box">
@@ -1533,6 +1630,7 @@ function toggleTheme(){
 // ── APP STATE ─────────────────────────────────────────────
 var APP = {
   qs:[], qi:0, ok:0, no:0, active:false, sec:0, ti:null, tts:true, res:[],
+  adaptive:true, level:2, used:[], curIdx:0,
   students:[],
   library:[],
   vids:[
@@ -1545,12 +1643,17 @@ var APP = {
 };
 
 var DEF_QA = [
-  {q:"Fotosintez qaysi organellada sodir boladi?", a:"Fotosintez xloroplastda sodir boladi."},
-  {q:"Fotosintezda qaysi gazlar almashinadi?", a:"Simlik CO2 yutib, O2 ajratib chiqaradi."},
-  {q:"Fotosintez uchun qanday energiya kerak?", a:"Quyosh yoruglik energiyasi zarur."},
-  {q:"Xlorofill nima vazifani bajaradi?", a:"Yoruglik energiyasini yutadi va kimyoviy energiyaga aylantiradi."},
-  {q:"Fotosintezning kimyoviy formulasi?", a:"6CO2 + 6H2O + yoruglik = C6H12O6 + 6O2"}
+  {q:"Fotosintez qaysi organellada sodir boladi?", a:"Fotosintez xloroplastda sodir boladi.", difficulty:"oson"},
+  {q:"Fotosintezda qaysi gazlar almashinadi?", a:"Simlik CO2 yutib, O2 ajratib chiqaradi.", difficulty:"oson"},
+  {q:"Fotosintez uchun qanday energiya kerak?", a:"Quyosh yoruglik energiyasi zarur.", difficulty:"orta"},
+  {q:"Xlorofill nima vazifani bajaradi?", a:"Yoruglik energiyasini yutadi va kimyoviy energiyaga aylantiradi.", difficulty:"orta"},
+  {q:"Fotosintezning kimyoviy formulasi?", a:"6CO2 + 6H2O + yoruglik = C6H12O6 + 6O2", difficulty:"qiyin"}
 ];
+
+// Qiyinlik darajasi yordamchilari
+var DIFF_LEVEL = { oson:1, orta:2, qiyin:3 };
+var DIFF_LABEL = { 1:"Oson", 2:"O'rta", 3:"Qiyin" };
+function diffLevel(q){ return DIFF_LEVEL[(q && q.difficulty) || "orta"] || 2; }
 
 // ── HELPERS ───────────────────────────────────────────────
 function el(id){ return document.getElementById(id); }
@@ -1573,7 +1676,7 @@ function go(name){
   var s=el("SCR-"+name), n=el("N-"+name);
   if(s) s.classList.add("on");
   if(n) n.classList.add("on");
-  var titles={session:"Dars sessiyasi",upload:"Mavzu yuklash",library:"Kitoblar kutubxonasi",chat:"AI Yordamchi",students:"Oquvchilar",videos:"Video darslar",results:"Natijalar",history:"Sessiya tarixi",analysis:"Mavzular tahlili",parents:"Ota-onalar paneli",tests:"Test natijalari",repeat:"Takrorlash jadvali"};
+  var titles={session:"Dars sessiyasi",upload:"Mavzu yuklash",library:"Kitoblar kutubxonasi",chat:"AI Yordamchi",students:"Oquvchilar",videos:"Video darslar",results:"Natijalar",history:"Sessiya tarixi",analysis:"Mavzular tahlili",parents:"Ota-onalar paneli",tests:"Test natijalari",repeat:"Takrorlash jadvali",homework:"Uy vazifasi"};
   el("PAGE-TITLE").textContent = titles[name]||"";
   if(name==="students") renderStudents();
   if(name==="videos") renderVids("all");
@@ -1584,6 +1687,7 @@ function go(name){
   if(name==="library") renderLibrary();
   if(name==="tests") renderTests();
   if(name==="repeat") renderRepeat();
+  if(name==="homework") renderHomework();
 }
 
 // ── SESSION ───────────────────────────────────────────────
@@ -1593,18 +1697,53 @@ function startSession(){
 }
 
 function doStartSession(){
-  var qs = getQAs();
-  APP.qs = qs.length ? qs : DEF_QA.slice();
+  if(!APP.repeatMode){
+    var qs = getQAs();
+    APP.qs = qs.length ? qs : DEF_QA.slice();
+  }
+  APP.adaptive = APP.repeatMode ? false : (el("ADAPT-TG") ? el("ADAPT-TG").checked : true);
   APP.qi=0; APP.ok=0; APP.no=0; APP.active=true; APP.sec=0; APP.res=[];
+  APP.used=[]; APP.level=2;
   clearInterval(APP.ti);
   APP.ti = setInterval(function(){
     APP.sec++;
     el("TIMER").textContent = pad(Math.floor(APP.sec/60))+":"+pad(APP.sec%60);
   }, 1000);
   hide("BTN-S"); show("BTN-A"); show("BTN-E"); show("BTN-M");
+  var aw=el("ADAPT-WRAP"); if(aw) aw.style.display="none";
   el("SESS-STATUS").textContent = "Faol";
-  loadQ(0); updScore();
+  startQuestionFlow(); updScore();
   toast("Sessiya boshlandi: " + (APP.currentStu ? APP.currentStu.name : ""));
+}
+
+// Adaptiv yoki ketma-ket savolni tanlash
+function pickNextIdx(){
+  var remaining=[];
+  for(var i=0;i<APP.qs.length;i++) if(APP.used.indexOf(i)<0) remaining.push(i);
+  if(!remaining.length) return -1;
+  if(!APP.adaptive) return remaining[0];
+  var lvl=APP.level;
+  remaining.sort(function(a,b){
+    return Math.abs(diffLevel(APP.qs[a])-lvl) - Math.abs(diffLevel(APP.qs[b])-lvl);
+  });
+  return remaining[0];
+}
+
+function startQuestionFlow(){
+  APP.curIdx = pickNextIdx();
+  if(APP.curIdx<0){ endSession(); return; }
+  APP.used.push(APP.curIdx);
+  loadQ();
+}
+
+function updDiffBadge(q){
+  var b=el("Q-DIFF"); if(!b) return;
+  if(!APP.adaptive || !q){ b.style.display="none"; return; }
+  var lv=diffLevel(q);
+  var cls=lv===1?"badge-green":lv===3?"badge-red":"badge-amber";
+  b.className="badge "+cls;
+  b.textContent=DIFF_LABEL[lv];
+  b.style.display="inline-flex";
 }
 
 // ── STUDENT SELECT MODAL ──────────────────────────────────
@@ -1679,11 +1818,14 @@ function confirmStuAndStart(){
 
 function pad(n){ return String(n).padStart(2,"0"); }
 
-function loadQ(i){
-  if(i>=APP.qs.length){ endSession(); return; }
+function loadQ(){
+  var i=APP.curIdx;
+  if(i<0 || i==null || i>=APP.qs.length){ endSession(); return; }
   var q=APP.qs[i];
-  el("Q-NUM").textContent = "Savol "+(i+1)+" / "+APP.qs.length;
+  var done=APP.ok+APP.no;
+  el("Q-NUM").textContent = "Savol "+(done+1)+" / "+APP.qs.length;
   el("Q-TXT").textContent = q.q;
+  updDiffBadge(q);
   el("ANS-BOX").style.display = "none";
   el("MIC-BOX").style.display = "none";
   hide("BTN-OK"); hide("BTN-NO"); hide("BTN-NX"); show("BTN-A");
@@ -1693,7 +1835,7 @@ function loadQ(i){
 }
 
 function showAnswer(){
-  var q=APP.qs[APP.qi];
+  var q=APP.qs[APP.curIdx];
   el("ANS-TXT").textContent = q.a;
   el("ANS-BOX").style.display = "block";
   hide("BTN-A"); show("BTN-OK"); show("BTN-NO");
@@ -1702,21 +1844,29 @@ function showAnswer(){
 }
 
 function markResult(isOk){
-  var q=APP.qs[APP.qi];
-  if(isOk) APP.ok++; else APP.no++;
-  APP.res.push({q:q.q, a:q.a, ok:isOk});
+  var q=APP.qs[APP.curIdx];
+  if(isOk){ APP.ok++; if(APP.adaptive) APP.level=Math.min(3, APP.level+1); }
+  else { APP.no++; if(APP.adaptive) APP.level=Math.max(1, APP.level-1); }
+  APP.res.push({q:q.q, a:q.a, ok:isOk, difficulty:q.difficulty||"orta", srKey:q.srKey});
   addLog(q.q, isOk); updScore();
   hide("BTN-OK"); hide("BTN-NO");
-  if(APP.qi < APP.qs.length-1) show("BTN-NX");
+  if((APP.ok+APP.no) < APP.qs.length) show("BTN-NX");
   else endSession();
 }
 
-function nextQ(){ APP.qi++; loadQ(APP.qi); }
+function nextQ(){
+  APP.curIdx = pickNextIdx();
+  if(APP.curIdx<0){ endSession(); return; }
+  APP.used.push(APP.curIdx);
+  loadQ();
+}
 
 function endSession(){
   clearInterval(APP.ti); APP.active=false;
   ["BTN-A","BTN-OK","BTN-NO","BTN-NX","BTN-E","BTN-M"].forEach(hide);
   show("BTN-S");
+  var aw=el("ADAPT-WRAP"); if(aw) aw.style.display="flex";
+  var db=el("Q-DIFF"); if(db) db.style.display="none";
   el("SESS-STATUS").textContent = "Yakunlandi";
   setAI("Sessiya yakunlandi", false);
   var tot=APP.ok+APP.no, pct=tot>0?Math.round(APP.ok/tot*100):0;
@@ -2056,17 +2206,21 @@ function stopMic(){ if(REC) REC.stop(); MIC_ON=false; }
 // ── QA EDITOR ─────────────────────────────────────────────
 function initQA(){
   var ed=el("QA-ED");
-  if(ed&&ed.children.length===0) DEF_QA.forEach(function(qa){ addQRow(qa.q,qa.a); });
+  if(ed&&ed.children.length===0) DEF_QA.forEach(function(qa){ addQRow(qa.q,qa.a,qa.difficulty); });
 }
-function addQRow(q,a){
-  q=q||""; a=a||"";
+function addQRow(q,a,diff){
+  q=q||""; a=a||""; diff=diff||"orta";
   var ed=el("QA-ED"), n=ed.children.length+1;
   var d=document.createElement("div"); d.className="qa-row";
   var hdr=document.createElement("div"); hdr.style.cssText="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px";
   var lbl=document.createElement("div"); lbl.className="qa-num"; lbl.textContent="Savol "+n;
+  var right=document.createElement("div"); right.style.cssText="display:flex;align-items:center;gap:8px";
+  var sel=document.createElement("select"); sel.className="qd"; sel.style.cssText="width:auto;padding:4px 8px;font-size:12px";
+  ["oson","orta","qiyin"].forEach(function(v){ var o=document.createElement("option"); o.value=v; o.textContent={oson:"Oson",orta:"O'rta",qiyin:"Qiyin"}[v]; if(v===diff)o.selected=true; sel.appendChild(o); });
   var del=document.createElement("button"); del.style.cssText="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3)"; del.textContent="🗑";
   del.onclick=function(){ d.remove(); renumQ(); };
-  hdr.appendChild(lbl); hdr.appendChild(del);
+  right.appendChild(sel); right.appendChild(del);
+  hdr.appendChild(lbl); hdr.appendChild(right);
   var qi=document.createElement("input"); qi.type="text"; qi.placeholder="Savol matni..."; qi.className="qq"; qi.value=q; qi.style.marginBottom="7px";
   var ai=document.createElement("input"); ai.type="text"; ai.placeholder="Togri javob..."; ai.className="qa"; ai.value=a;
   d.appendChild(hdr); d.appendChild(qi); d.appendChild(ai);
@@ -2075,9 +2229,10 @@ function addQRow(q,a){
 function renumQ(){ document.querySelectorAll(".qa-num").forEach(function(e,i){ e.textContent="Savol "+(i+1); }); }
 function getQAs(){
   var qs=[];
-  document.querySelectorAll(".qa-row").forEach(function(r){
+  document.querySelectorAll("#QA-ED .qa-row").forEach(function(r){
     var q=r.querySelector(".qq").value.trim(), a=r.querySelector(".qa").value.trim();
-    if(q&&a) qs.push({q:q,a:a});
+    var ds=r.querySelector(".qd"), diff=ds?ds.value:"orta";
+    if(q&&a) qs.push({q:q,a:a,difficulty:diff});
   });
   return qs;
 }
@@ -2187,11 +2342,11 @@ async function genQA(){
   var btn=document.querySelector('[onclick="genQA()"]');
   btn.innerHTML='<span class="spin"></span> Yaratilmoqda...'; btn.disabled=true;
   try{
-    var raw=await callAI('Quyidagi biologiya mavzusi asosida 5 ta savol-javob yarating. Faqat JSON formatida qaytaring:\n[{"q":"savol","a":"javob"}]\n\nMavzu: '+txt);
+    var raw=await callAI('Quyidagi biologiya mavzusi asosida 5 ta savol-javob yarating. Har biriga qiyinlik darajasini bering ("oson", "orta" yoki "qiyin"). Faqat JSON formatida qaytaring:\n[{"q":"savol","a":"javob","difficulty":"oson"}]\n\nMavzu: '+txt);
     var clean=raw.replace(/```json|```/g,"").trim();
     var qas=JSON.parse(clean);
     el("QA-ED").innerHTML="";
-    qas.forEach(function(qa){ addQRow(qa.q,qa.a); });
+    qas.forEach(function(qa){ addQRow(qa.q,qa.a,qa.difficulty); });
     toast("AI "+qas.length+" ta savol yaratdi!");
   } catch(e){ toast("Xato: "+e.message); }
   btn.innerHTML='&#10024; AI bilan savollar yaratish'; btn.disabled=false;
@@ -3996,10 +4151,228 @@ window.addEventListener("load", function(){
   }, 500);
 });
 
+// ── UY VAZIFASI (HOMEWORK) ────────────────────────────────
+APP.homework = [];
+function loadHomework(){
+  try { APP.homework = JSON.parse(localStorage.getItem("alc_bio_hw")||"[]"); }
+  catch(e){ APP.homework = []; }
+}
+function saveHwStore(){ localStorage.setItem("alc_bio_hw", JSON.stringify(APP.homework)); }
+
+function openHwModal(){
+  // O'quvchilar ro'yxati
+  var stuSel = el("HW-STU");
+  stuSel.innerHTML = APP.students.length ? "" : "<option value=''>Avval o'quvchi qo'shing</option>";
+  APP.students.forEach(function(s){
+    stuSel.innerHTML += "<option value='"+s.id+"'>"+s.name+"</option>";
+  });
+  // Kutubxona kitoblari
+  var bookSel = el("HW-BOOK");
+  bookSel.innerHTML = "<option value=''>— Kitob tanlang —</option>";
+  APP.library.forEach(function(b){
+    bookSel.innerHTML += "<option value='"+b.id+"'>"+b.name+" ("+(b.qas?b.qas.length:0)+" savol)</option>";
+  });
+  el("HW-TITLE").value = "";
+  // Standart muddat: 3 kundan keyin
+  var d = new Date(); d.setDate(d.getDate()+3);
+  el("HW-DUE").value = d.toISOString().slice(0,10);
+  el("HW-QA-ED").innerHTML = "";
+  addHwQARow();
+  el("HW-MOD").classList.add("on");
+}
+function closeHwModal(){ el("HW-MOD").classList.remove("on"); }
+
+function addHwQARow(q,a){
+  q=q||""; a=a||"";
+  var ed=el("HW-QA-ED");
+  var d=document.createElement("div"); d.className="qa-row hw-qa-row";
+  var hdr=document.createElement("div"); hdr.style.cssText="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px";
+  var lbl=document.createElement("div"); lbl.className="hwqa-num"; lbl.style.cssText="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.06em";
+  var del=document.createElement("button"); del.style.cssText="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text3)"; del.textContent="🗑";
+  del.onclick=function(){ d.remove(); renumHwQA(); };
+  hdr.appendChild(lbl); hdr.appendChild(del);
+  var qi=document.createElement("input"); qi.type="text"; qi.placeholder="Savol matni..."; qi.className="hwq"; qi.value=q; qi.style.marginBottom="7px";
+  var ai=document.createElement("input"); ai.type="text"; ai.placeholder="Togri javob..."; ai.className="hwa"; ai.value=a;
+  d.appendChild(hdr); d.appendChild(qi); d.appendChild(ai);
+  ed.appendChild(d); renumHwQA();
+}
+function renumHwQA(){ document.querySelectorAll(".hwqa-num").forEach(function(e,i){ e.textContent="Savol "+(i+1); }); }
+function getHwQAs(){
+  var qs=[];
+  document.querySelectorAll("#HW-QA-ED .hw-qa-row").forEach(function(r){
+    var q=r.querySelector(".hwq").value.trim(), a=r.querySelector(".hwa").value.trim();
+    if(q&&a) qs.push({q:q,a:a});
+  });
+  return qs;
+}
+function loadHwBookQA(){
+  var id=parseInt(el("HW-BOOK").value,10);
+  if(!id){ toast("Avval kitob tanlang"); return; }
+  var book=APP.library.find(function(b){ return b.id===id; });
+  if(!book || !book.qas || !book.qas.length){ toast("Bu kitobda savol yo'q"); return; }
+  el("HW-QA-ED").innerHTML="";
+  book.qas.forEach(function(qa){ addHwQARow(qa.q, qa.a); });
+  if(!el("HW-TITLE").value) el("HW-TITLE").value = book.name + " — uy vazifasi";
+  toast(book.qas.length+" ta savol yuklandi");
+}
+function saveHomework(){
+  var stuId=parseInt(el("HW-STU").value,10);
+  var stu=APP.students.find(function(s){ return s.id===stuId; });
+  if(!stu){ toast("O'quvchini tanlang"); return; }
+  var title=el("HW-TITLE").value.trim();
+  if(!title){ toast("Vazifa nomini kiriting"); return; }
+  var qa=getHwQAs();
+  if(!qa.length){ toast("Kamida 1 ta savol kiriting"); return; }
+  APP.homework.unshift({
+    id: Date.now(),
+    studentId: stu.id,
+    student: stu.name,
+    title: title,
+    due: el("HW-DUE").value || "",
+    created: new Date().toLocaleDateString("uz-UZ"),
+    qa: qa,
+    status: "yuborilgan",
+    result: null
+  });
+  saveHwStore();
+  closeHwModal();
+  renderHomework();
+  toast("Uy vazifasi yuborildi: " + stu.name);
+}
+function deleteHomework(id){
+  if(!confirm("Bu uy vazifasi o'chirilsinmi?")) return;
+  APP.homework = APP.homework.filter(function(h){ return h.id!==id; });
+  saveHwStore(); renderHomework(); toast("O'chirildi");
+}
+
+function updateHwBadge(){
+  var pending = APP.homework.filter(function(h){ return h.status!=="bajarilgan"; }).length;
+  var b=el("HW-BADGE");
+  if(b){ b.style.display = pending>0?"block":"none"; b.textContent = pending; }
+}
+
+function renderHomework(){
+  var list=el("HW-LIST"); if(!list) return;
+  var hw=APP.homework;
+  var done = hw.filter(function(h){ return h.status==="bajarilgan"; });
+  el("HW-S-TOTAL").textContent = hw.length;
+  el("HW-S-PENDING").textContent = hw.length - done.length;
+  el("HW-S-DONE").textContent = done.length;
+  if(done.length){
+    var avg = Math.round(done.reduce(function(s,h){ return s+(h.result?h.result.pct:0); },0)/done.length);
+    el("HW-S-AVG").textContent = avg+"%";
+  } else { el("HW-S-AVG").textContent = "—"; }
+  updateHwBadge();
+
+  list.innerHTML="";
+  if(!hw.length){
+    list.innerHTML = "<div class=\"card\" style=\"text-align:center;padding:36px\"><div style=\"font-size:36px;margin-bottom:10px\">📭</div><div style=\"font-size:15px;font-weight:600;margin-bottom:5px\">Hali uy vazifasi yo'q</div><div style=\"font-size:13px;color:var(--text3)\">\"Yangi uy vazifasi\" tugmasi orqali vazifa yuboring</div></div>";
+    return;
+  }
+  hw.forEach(function(h){
+    var doneFlag = h.status==="bajarilgan";
+    var card=document.createElement("div"); card.className="card"; card.style.cssText="margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap";
+    var ic=document.createElement("div"); ic.style.cssText="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:"+(doneFlag?"var(--green-l)":"var(--amber-l)"); ic.textContent=doneFlag?"✅":"📝";
+
+    var info=document.createElement("div"); info.style.flex="1"; info.style.minWidth="180px";
+    var top=document.createElement("div"); top.style.cssText="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px";
+    var nm=document.createElement("span"); nm.style.cssText="font-size:14px;font-weight:700"; nm.textContent=h.student;
+    var st=document.createElement("span"); st.className="badge "+(doneFlag?"badge-green":"badge-amber"); st.textContent=doneFlag?"Bajarildi":"Kutilmoqda";
+    top.appendChild(nm); top.appendChild(st);
+    var ttl=document.createElement("div"); ttl.style.cssText="font-size:13px;color:var(--text2);font-weight:600"; ttl.textContent=h.title;
+    var sub=document.createElement("div"); sub.style.cssText="font-size:12px;color:var(--text3);margin-top:2px";
+    sub.textContent = h.qa.length+" ta savol · Yuborilgan: "+h.created+(h.due?" · Muddat: "+h.due:"");
+    info.appendChild(top); info.appendChild(ttl); info.appendChild(sub);
+
+    var right=document.createElement("div"); right.style.cssText="display:flex;align-items:center;gap:10px;flex-shrink:0";
+    if(doneFlag && h.result){
+      var col=h.result.pct>=86?"var(--green)":h.result.pct>=70?"var(--amber)":"var(--red)";
+      var sc=document.createElement("div"); sc.style.cssText="text-align:right";
+      sc.innerHTML="<div style=\"font-family:Space Grotesk,sans-serif;font-size:22px;font-weight:700;color:"+col+"\">"+h.result.pct+"%</div><div style=\"font-size:11px;color:var(--text3)\">"+h.result.date+"</div>";
+      right.appendChild(sc);
+    } else {
+      var doBtn=document.createElement("button"); doBtn.className="btn btn-primary"; doBtn.textContent="▶ Bajarish";
+      doBtn.onclick=function(){ startHwDo(h.id); };
+      right.appendChild(doBtn);
+    }
+    var delBtn=document.createElement("button"); delBtn.className="btn btn-danger"; delBtn.style.cssText="padding:8px 10px"; delBtn.textContent="🗑";
+    delBtn.onclick=function(){ deleteHomework(h.id); };
+    right.appendChild(delBtn);
+
+    card.appendChild(ic); card.appendChild(info); card.appendChild(right);
+    list.appendChild(card);
+  });
+}
+
+// ── UY VAZIFASINI BAJARISH (runner) ───────────────────────
+function startHwDo(id){
+  var hw=APP.homework.find(function(h){ return h.id===id; });
+  if(!hw) return;
+  APP.hwDo = { hw:hw, i:0, ok:0, no:0 };
+  el("HWD-TITLE").textContent = hw.title;
+  el("HWD-SUB").textContent = "O'quvchi: " + hw.student;
+  el("HW-DO-MOD").classList.add("on");
+  hwdLoad();
+}
+function hwdLoad(){
+  var d=APP.hwDo, q=d.hw.qa[d.i];
+  el("HWD-COUNT").textContent=(d.i+1)+" / "+d.hw.qa.length;
+  el("HWD-Q").textContent=q.q;
+  el("HWD-ANS").textContent=q.a;
+  el("HWD-ANS-BOX").style.display="none";
+  show("HWD-SHOW"); hide("HWD-OK"); hide("HWD-NO");
+}
+function hwdReveal(){
+  el("HWD-ANS-BOX").style.display="block";
+  hide("HWD-SHOW"); show("HWD-OK"); show("HWD-NO");
+}
+function hwdMark(ok){
+  var d=APP.hwDo;
+  if(ok) d.ok++; else d.no++;
+  d.i++;
+  if(d.i < d.hw.qa.length){ hwdLoad(); }
+  else { finishHwDo(); }
+}
+function finishHwDo(){
+  var d=APP.hwDo, tot=d.ok+d.no, pct=tot>0?Math.round(d.ok/tot*100):0;
+  var hw=d.hw;
+  hw.status="bajarilgan";
+  hw.result={ pct:pct, ok:d.ok, no:d.no, total:tot, date:new Date().toLocaleDateString("uz-UZ") };
+  saveHwStore();
+
+  // O'quvchi statistikasini yangilash
+  var stu=APP.students.find(function(s){ return s.id===hw.studentId; });
+  if(stu){
+    stu.ses += 1;
+    stu.avg = stu.ses===1 ? pct : Math.round((stu.avg*(stu.ses-1)+pct)/stu.ses);
+    stu.stars = calcStars(stu.avg);
+    stu.last = "Bugun";
+    saveStudents();
+  }
+  // Tarixga yozish
+  var entry={
+    id:Date.now(), date:hw.result.date,
+    time:new Date().toLocaleTimeString("uz-UZ",{hour:"2-digit",minute:"2-digit"}),
+    timestamp:Date.now(), student:hw.student, studentId:hw.studentId,
+    topic:"Uy vazifasi: "+hw.title, sinf:"", pct:pct, ok:d.ok, no:d.no, total:tot,
+    duration:"—", stars:calcStars(pct),
+    res:hw.qa.map(function(qa,i){ return {q:qa.q,a:qa.a,ok:i<d.ok}; })
+  };
+  var hist=loadHistory(); hist.unshift(entry); if(hist.length>200) hist=hist.slice(0,200);
+  localStorage.setItem("alc_bio_history", JSON.stringify(hist));
+
+  closeHwDoModal();
+  renderHomework();
+  toast("Uy vazifasi bajarildi! Natija: "+pct+"%");
+}
+function closeHwDoModal(){ el("HW-DO-MOD").classList.remove("on"); APP.hwDo=null; }
+
 // ── INIT ──────────────────────────────────────────────────
 loadStudents();
 loadLibrary();
+loadHomework();
 initQA(); renderStudents(); renderVids("all");
+updateHwBadge();
 
 // ── KICHIK HAYVON ANIMATSIYALARI (xilma-xil harakat) ──────
 (function(){
