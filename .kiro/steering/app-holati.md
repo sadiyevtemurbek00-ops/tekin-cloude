@@ -123,3 +123,14 @@
 - `exportPDF` (sessiya PDF) ga "AI o'zlashtirish tahlili" bo'limi qo'shildi (`APP.aiSummary` + `computeAiMastery`); maxsus apostroflar ASCII ga tozalanadi (helvetica uchun).
 - `saveSessionToHistory` entry'ga `aiMastery` qo'shildi.
 - `renderResult` dagi avto-trigger olib tashlandi (endi `finishSessionAI` boshqaradi).
+
+
+
+### TUZATISH: Edge mikrofon + natija umumiy savollarga nisbatan
+- **Edge mikrofon:** `startMic` ga til fallback qo'shildi (`MIC_LANGS=["uz-UZ","ru-RU","en-US"]`). `language-not-supported` xatosida keyingi tilga avto o'tadi. `not-allowed`/`no-speech` uchun aniq xabarlar. `REC.start()` try/catch ichida.
+- **Natija hisobi (MUHIM):** endi HAR DOIM sessiyadagi umumiy savol soniga (`APP.qs.length`) nisbatan:
+  - `endSession`: `tot=APP.qs.length`, `pct=ok/tot`.
+  - `updScore` (jonli ko'rsatkich) ham total asosida.
+  - `computeAiMastery`: `sum(ball yoki manual 100/0) / totalQ` (javob berilmagan = 0).
+  - `exportPDF`: pct total asosida, "Jami savol" = totalQ.
+  - Sessiya to'liq yakunlanmasa ham (erta "Yakunlash") natija to'g'ri: masalan 3/5 = 60%.

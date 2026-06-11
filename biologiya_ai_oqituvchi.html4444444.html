@@ -1854,7 +1854,10 @@ function endSession(){
   show("BTN-S");
   el("SESS-STATUS").textContent = "Yakunlandi";
   setAI("Sessiya yakunlandi", false);
-  var tot=APP.ok+APP.no, pct=tot>0?Math.round(APP.ok/tot*100):0;
+  // Natija HAR DOIM sessiyadagi umumiy savollar soniga nisbatan hisoblanadi
+  // (sessiya to'liq yakunlanmagan bo'lsa ham javob berilmagan savollar 0 deb olinadi)
+  var tot = (APP.qs && APP.qs.length) ? APP.qs.length : (APP.ok+APP.no);
+  var pct = tot>0 ? Math.round(APP.ok/tot*100) : 0;
   // AI ball o'rtachasi mavjud bo'lsa, o'zlashtirish shu asosda hisoblanadi
   var aiM = computeAiMastery();
   var masteryPct = (aiM!==null) ? aiM : pct;
@@ -2019,9 +2022,10 @@ function renderHistory(){
 }
 
 function updScore(){
-  var tot=APP.ok+APP.no, pct=tot>0?Math.round(APP.ok/tot*100):0;
+  var totalQ=(APP.qs&&APP.qs.length)?APP.qs.length:(APP.ok+APP.no), ans=APP.ok+APP.no;
+  var pct=totalQ>0?Math.round(APP.ok/totalQ*100):0;
   el("C-OK").textContent=APP.ok; el("C-NO").textContent=APP.no;
-  el("S-VAL").textContent = tot>0?pct+"%":"—";
+  el("S-VAL").textContent = ans>0?pct+"%":"—";
   el("S-ARC").style.strokeDashoffset = 239-(239*pct/100);
 }
 
@@ -2172,15 +2176,19 @@ function stopVoiceReport(){
 
 // ── MIC ───────────────────────────────────────────────────
 var REC=null, MIC_ON=false;
+var MIC_LANGS=["uz-UZ","ru-RU","en-US"], MIC_LANG_IDX=0;
 function toggleMic(){
   if(!("webkitSpeechRecognition" in window||"SpeechRecognition" in window)){
-    toast("Edge yoki Chrome ishlatilsin"); return;
+    toast("Ovozli kiritish qo'llab-quvvatlanmaydi. Chrome yoki Edge ishlatilsin"); return;
   }
   MIC_ON ? stopMic() : startMic();
 }
 function startMic(){
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  REC=new SR(); REC.lang="uz-UZ"; REC.continuous=false; REC.interimResults=true;
+  if(!SR){ toast("Brauzer ovozli kiritishni qo'llab-quvvatlamaydi (Chrome tavsiya etiladi)"); return; }
+  REC=new SR();
+  REC.lang=MIC_LANGS[MIC_LANG_IDX]||"uz-UZ";
+  REC.continuous=false; REC.interimResults=true;
   REC.onstart=function(){
     MIC_ON=true; el("MIC-LBL").textContent="Tinglayapti...";
     el("MIC-DOT").style.display="block"; el("MIC-BOX").style.display="block";
@@ -2201,10 +2209,24 @@ function startMic(){
       aiGrade();
     }
   };
-  REC.onerror=function(ev){ MIC_ON=false; el("MIC-LBL").textContent="Javob yozish"; el("MIC-DOT").style.display="none"; toast(ev.error==="not-allowed"?"Mikrofon ruxsati kerak":"Mikrofon xato: "+ev.error); };
-  REC.start();
+  REC.onerror=function(ev){
+    MIC_ON=false; el("MIC-LBL").textContent="Javob yozish"; el("MIC-DOT").style.display="none"; setAI("Kutilmoqda...",false);
+    // Edge bu tilni qo'llab-quvvatlamasa, keyingi tilga o'tib qayta urinamiz
+    if((ev.error==="language-not-supported"||ev.error==="bad-grammar") && MIC_LANG_IDX < MIC_LANGS.length-1){
+      MIC_LANG_IDX++;
+      toast("Ovoz tili qo'llab-quvvatlanmadi — "+MIC_LANGS[MIC_LANG_IDX]+" ga o'tildi");
+      setTimeout(startMic, 300);
+      return;
+    }
+    if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){
+      toast("Mikrofon ruxsati kerak. Edge: Sozlamalar > Maxfiylik > 'Onlayn nutqni aniqlash' yoqilsin"); return;
+    }
+    if(ev.error==="no-speech"){ toast("Ovoz eshitilmadi, qaytadan urinib ko'ring"); return; }
+    toast("Mikrofon xato: "+ev.error);
+  };
+  try{ REC.start(); }catch(e){ MIC_ON=false; toast("Mikrofonni boshlab bo'lmadi: "+e.message); }
 }
-function stopMic(){ if(REC) REC.stop(); MIC_ON=false; }
+function stopMic(){ if(REC){ try{ REC.stop(); }catch(e){} } MIC_ON=false; }
 
 // ── QA EDITOR ─────────────────────────────────────────────
 function initQA(){
@@ -2694,9 +2716,15 @@ function renderResult(pct, tot){
 
 // ── AI SESSIYA TAHLILI (3-bosqich) ────────────────────────
 function computeAiMastery(){
-  var balls=(APP.res||[]).filter(function(r){ return typeof r.ball==="number"; }).map(function(r){ return r.ball; });
-  if(!balls.length) return null;
-  return Math.round(balls.reduce(function(a,b){return a+b;},0)/balls.length);
+  var totalQ=(APP.qs&&APP.qs.length)?APP.qs.length:((APP.res&&APP.res.length)||0);
+  if(!totalQ) return null;
+  var anyBall=(APP.res||[]).some(function(r){ return typeof r.ball==="number"; });
+  if(!anyBall) return null; // AI baholash umuman ishlatilmagan -> pct ishlatiladi
+  var sum=0;
+  (APP.res||[]).forEach(function(r){
+    sum += (typeof r.ball==="number") ? r.ball : (r.ok ? 100 : 0);
+  });
+  return Math.round(sum/totalQ); // javob berilmagan savollar 0 deb hisoblanadi
 }
 
 async function aiSessionAnalysis(){
@@ -2805,7 +2833,8 @@ async function ensureXLSX(){
 }
 
 async function exportPDF(){
-  var pct=APP.ok+APP.no>0?Math.round(APP.ok/(APP.ok+APP.no)*100):0;
+  var totQ=(APP.qs&&APP.qs.length)?APP.qs.length:(APP.ok+APP.no);
+  var pct=totQ>0?Math.round(APP.ok/totQ*100):0;
   var stars=calcStars(pct);
   var stu=APP.currentStu?APP.currentStu.name:(el("T-ST")?(el("T-ST").value||"Oquvchi"):"Oquvchi");
   var top=el("T-NM")?(el("T-NM").value||"Dars"):"Dars";
@@ -2851,7 +2880,7 @@ async function exportPDF(){
     doc.text(starStr,37,116,{align:"center"});
 
     // Stat boxes
-    [[APP.ok,"Togri",[16,185,129]],[APP.no,"Notogri",[239,68,68]],[APP.ok+APP.no,"Jami",[26,111,244]]].forEach(function(b,i){
+    [[APP.ok,"Togri",[16,185,129]],[APP.no,"Notogri",[239,68,68]],[totQ,"Jami savol",[26,111,244]]].forEach(function(b,i){
       var x=71+i*43;
       doc.setFillColor(b[2][0],b[2][1],b[2][2]); doc.roundedRect(x,78,37,42,4,4,"F");
       doc.setTextColor(255,255,255); doc.setFontSize(22); doc.setFont("helvetica","bold");
