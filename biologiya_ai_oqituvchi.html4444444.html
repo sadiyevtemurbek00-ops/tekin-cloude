@@ -768,6 +768,9 @@ body.dark .bg-deco span { opacity: .08; }
     <button class="ni" onclick="go('students')" id="N-students">
       <span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> O'quvchilar
     </button>
+    <button class="ni" onclick="go('groups')" id="N-groups">
+      <span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><rect x="14" y="3" width="8" height="8" rx="2"/></svg></span> Guruhlar
+    </button>
     <button class="ni" onclick="go('videos')" id="N-videos">
       <span class="ni-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8l-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg></span> Video darslar
     </button>
@@ -1019,6 +1022,10 @@ body.dark .bg-deco span { opacity: .08; }
               <option>8-sinf</option><option>9-sinf</option><option>10-sinf</option><option>11-sinf</option>
             </select>
           </div>
+          <div>
+            <label>Guruh</label>
+            <select id="NEW-STU-GROUP" style="width:150px"><option value="">— Guruhsiz —</option></select>
+          </div>
           <div style="display:flex;gap:7px">
             <button class="btn btn-primary" onclick="addStudentForm()">Qo'shish</button>
             <button class="btn btn-secondary" onclick="toggleAddStuForm()">Bekor</button>
@@ -1036,6 +1043,44 @@ body.dark .bg-deco span { opacity: .08; }
     <div class="card" style="margin-top:20px">
       <div style="font-size:14px;font-weight:600;margin-bottom:14px">O'zlashtirish grafigi</div>
       <div style="position:relative;height:240px"><canvas id="ST-CHART"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ===== GROUPS ===== -->
+  <div class="scr" id="SCR-groups">
+    <div class="sec-head">
+      <div><div class="sec-title">Guruhlar</div><div class="sec-sub">O'quvchilarni guruhlarga ajrating va boshqaring</div></div>
+      <button class="btn btn-primary" onclick="toggleAddGroupForm()">+ Guruh qo'shish</button>
+    </div>
+    <div id="ADD-GROUP-FORM" style="display:none;margin-bottom:18px">
+      <div class="card" style="padding:16px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:12px">Yangi guruh</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:1;min-width:200px">
+            <label>Guruh nomi *</label>
+            <input type="text" id="NEW-GROUP-INP" placeholder="Masalan: A guruh / Dushanba-Chorshanba" onkeydown="if(event.key==='Enter')addGroup()">
+          </div>
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-primary" onclick="addGroup()">Qo'shish</button>
+            <button class="btn btn-secondary" onclick="toggleAddGroupForm()">Bekor</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="g4" style="margin-bottom:20px">
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-val" id="GR-TOT">0</div><div class="stat-lbl">Jami guruh</div></div>
+      <div class="stat-card"><div class="stat-icon">🧑‍🎓</div><div class="stat-val" style="color:var(--blue)" id="GR-STU">0</div><div class="stat-lbl">Guruhlangan o'quvchi</div></div>
+      <div class="stat-card"><div class="stat-icon">❓</div><div class="stat-val" style="color:var(--amber)" id="GR-NONE">0</div><div class="stat-lbl">Guruhsiz</div></div>
+      <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-val" style="color:var(--green)" id="GR-BEST">—</div><div class="stat-lbl">Eng kuchli guruh</div></div>
+    </div>
+
+    <div id="GR-LIST"></div>
+
+    <div class="card" style="margin-top:8px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">🧩 O'quvchilarni guruhlash</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Har bir o'quvchi uchun guruhni tanlang</div>
+      <div id="GR-ASSIGN"></div>
     </div>
   </div>
 
@@ -1065,9 +1110,10 @@ body.dark .bg-deco span { opacity: .08; }
   <!-- ===== RESULTS ===== -->
   <div class="scr" id="SCR-results">
     <div class="sec-head">
-      <div><div class="sec-title">Natijalar</div><div class="sec-sub">Sessiya natijalari, reyting va hisobotlar</div></div>
+      <div><div class="sec-title">Natijalar</div><div class="sec-sub">Sessiya natijalari, guruhlar statistikasi va hisobotlar</div></div>
       <button class="btn btn-secondary" onclick="exportPDF()">&#128196; PDF Hisobot</button>
     </div>
+    <div id="RES-GROUPS"></div>
     <div id="RES-CONT">
       <div class="card" style="text-align:center;padding:40px">
         <div style="font-size:40px;margin-bottom:10px">&#128202;</div>
@@ -1232,6 +1278,30 @@ body.dark .bg-deco span { opacity: .08; }
         <select id="REP-BOOK-SEL" onchange="renderRepeat()" style="width:220px">
           <option value="all">Barcha kitoblar</option>
         </select>
+      </div>
+    </div>
+
+    <!-- Aralash takrorlash sozlamalari -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">🎯 Aralash takrorlash sessiyasi</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Bir nechta mavzuni tanlang — savollar aralash tartibda beriladi. Savollar sonini o'zingiz kiriting.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px">
+        <label style="font-size:12px;font-weight:600;color:var(--text2);margin:0">Mavzular (kitoblar)</label>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary" style="font-size:11px;padding:4px 9px" onclick="repTopicsToggle(true)">Hammasi</button>
+          <button class="btn btn-secondary" style="font-size:11px;padding:4px 9px" onclick="repTopicsToggle(false)">Tozalash</button>
+        </div>
+      </div>
+      <div id="REP-TOPICS" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+        <div style="width:170px">
+          <label>Savollar soni</label>
+          <input type="number" id="REP-COUNT" min="1" value="20" placeholder="Masalan: 20">
+        </div>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;padding-bottom:9px">
+          <input type="checkbox" id="REP-ONLY-DUE" checked style="width:auto;accent-color:var(--blue)"> Faqat takrorlash vaqti kelganlar
+        </label>
+        <button class="btn btn-primary btn-lg" style="margin-left:auto" onclick="startRepeatSession()">▶ Aralash sessiyani boshlash</button>
       </div>
     </div>
 
@@ -1676,9 +1746,10 @@ function go(name){
   var s=el("SCR-"+name), n=el("N-"+name);
   if(s) s.classList.add("on");
   if(n) n.classList.add("on");
-  var titles={session:"Dars sessiyasi",upload:"Mavzu yuklash",library:"Kitoblar kutubxonasi",chat:"AI Yordamchi",students:"Oquvchilar",videos:"Video darslar",results:"Natijalar",history:"Sessiya tarixi",analysis:"Mavzular tahlili",parents:"Ota-onalar paneli",tests:"Test natijalari",repeat:"Takrorlash jadvali",homework:"Uy vazifasi"};
+  var titles={session:"Dars sessiyasi",upload:"Mavzu yuklash",library:"Kitoblar kutubxonasi",chat:"AI Yordamchi",students:"Oquvchilar",groups:"Guruhlar",videos:"Video darslar",results:"Natijalar",history:"Sessiya tarixi",analysis:"Mavzular tahlili",parents:"Ota-onalar paneli",tests:"Test natijalari",repeat:"Takrorlash jadvali",homework:"Uy vazifasi"};
   el("PAGE-TITLE").textContent = titles[name]||"";
   if(name==="students") renderStudents();
+  if(name==="groups") renderGroups();
   if(name==="videos") renderVids("all");
   if(name==="upload") initQA();
   if(name==="history") renderHistory();
@@ -1688,6 +1759,7 @@ function go(name){
   if(name==="tests") renderTests();
   if(name==="repeat") renderRepeat();
   if(name==="homework") renderHomework();
+  if(name==="results") renderGroupStats();
 }
 
 // ── SESSION ───────────────────────────────────────────────
@@ -2385,7 +2457,8 @@ function renderStudents(){
     starsDiv.innerHTML=starsHTML(s.stars,"star-sm");
 
     var sub=document.createElement("div"); sub.style.cssText="font-size:11px;color:var(--text3)";
-    sub.textContent=s.ses+" ta sessiya · "+s.last;
+    var gName = groupNameById(s.groupId);
+    sub.textContent=s.ses+" ta sessiya · "+s.last+(gName?" · 👥 "+gName:"");
 
     var pb=document.createElement("div"); pb.className="pbar"; pb.style.cssText="margin-top:7px;height:5px;width:90px";
     var pf=document.createElement("div"); pf.className="pfill "+pcls; pf.style.width=pct+"%";
@@ -2440,18 +2513,28 @@ function toggleAddStuForm(){
   if(!form) return;
   var visible = form.style.display !== "none";
   form.style.display = visible ? "none" : "block";
-  if(!visible) setTimeout(function(){ var inp=el("NEW-STU-INP"); if(inp) inp.focus(); }, 100);
+  if(!visible){
+    // Guruh ro'yxatini yangilash
+    var gsel = el("NEW-STU-GROUP");
+    if(gsel){
+      gsel.innerHTML = "<option value=\"\">— Guruhsiz —</option>";
+      APP.groups.forEach(function(g){ gsel.innerHTML += "<option value=\""+g.id+"\">"+g.name+"</option>"; });
+    }
+    setTimeout(function(){ var inp=el("NEW-STU-INP"); if(inp) inp.focus(); }, 100);
+  }
 }
 
 function addStudentForm(){
   var nameInp = el("NEW-STU-INP");
   var sinfSel = el("NEW-STU-SINF");
+  var groupSel = el("NEW-STU-GROUP");
   var name = nameInp ? nameInp.value.trim() : "";
   if(!name){ toast("Ism kiriting!"); return; }
   var sinf = sinfSel ? sinfSel.value : "7-sinf";
+  var groupId = groupSel && groupSel.value ? parseInt(groupSel.value,10) : null;
   var ini = name.split(" ").map(function(w){ return w[0]||""; }).join("").toUpperCase().substring(0,2);
   var avs = ["av-blue","av-cyan","av-green","av-amber","av-red"];
-  var newStu = {id:Date.now(), name:name, ini:ini, sinf:sinf, av:avs[APP.students.length%avs.length], ses:0, avg:0, stars:0, last:"Yangi"};
+  var newStu = {id:Date.now(), name:name, ini:ini, sinf:sinf, groupId:groupId, av:avs[APP.students.length%avs.length], ses:0, avg:0, stars:0, last:"Yangi"};
   APP.students.push(newStu);
   saveStudents();
   if(nameInp) nameInp.value="";
@@ -3983,6 +4066,25 @@ function renderRepeat(){
     bookSel.value = curBook;
   }
 
+  // Aralash takrorlash uchun mavzular ro'yxati (checkboxlar)
+  var topicsWrap = el("REP-TOPICS");
+  if(topicsWrap){
+    var prevChecked = {};
+    topicsWrap.querySelectorAll("input[type=checkbox]").forEach(function(cb){ prevChecked[cb.value] = cb.checked; });
+    topicsWrap.innerHTML = "";
+    if(!APP.library.length){
+      topicsWrap.innerHTML = "<div style=\"font-size:12px;color:var(--text3)\">Kutubxonada kitob/mavzu yo'q</div>";
+    } else {
+      APP.library.forEach(function(b){
+        var checked = prevChecked[String(b.id)] ? "checked" : "";
+        var lbl = document.createElement("label");
+        lbl.style.cssText = "display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text2);background:var(--gray-50);border:1px solid var(--border);padding:6px 10px;border-radius:8px;cursor:pointer";
+        lbl.innerHTML = "<input type=\"checkbox\" value=\""+b.id+"\" "+checked+" style=\"width:auto;accent-color:var(--blue)\"> "+b.name+" <span style=\"color:var(--text3);font-weight:500\">("+(b.qas?b.qas.length:0)+")</span>";
+        topicsWrap.appendChild(lbl);
+      });
+    }
+  }
+
   if(stuSel){
     var curStu = stuSel.value;
     stuSel.innerHTML = "<option value=\"all\">Barcha o'quvchilar</option>";
@@ -4077,43 +4179,62 @@ function renderRepeat(){
   });
 }
 
+function repTopicsToggle(state){
+  var wrap = el("REP-TOPICS");
+  if(!wrap) return;
+  wrap.querySelectorAll("input[type=checkbox]").forEach(function(cb){ cb.checked = !!state; });
+}
+
 function startRepeatSession(){
   var sr = getSRData();
-  var today = getTodayStr();
-  var dueCards = [];
 
-  var selectedBook = el("REP-BOOK-SEL") ? el("REP-BOOK-SEL").value : "all";
-  var books = selectedBook === "all" ? APP.library :
-    APP.library.filter(function(b){ return String(b.id) === String(selectedBook); });
+  // Tanlangan mavzular (checkboxlar). Hech narsa tanlanmasa — REP-BOOK-SEL yoki hammasi
+  var selected = [];
+  var wrap = el("REP-TOPICS");
+  if(wrap){ wrap.querySelectorAll("input[type=checkbox]:checked").forEach(function(cb){ selected.push(cb.value); }); }
 
+  var books;
+  if(selected.length){
+    books = APP.library.filter(function(b){ return selected.indexOf(String(b.id)) >= 0; });
+  } else {
+    var sb = el("REP-BOOK-SEL") ? el("REP-BOOK-SEL").value : "all";
+    books = sb === "all" ? APP.library : APP.library.filter(function(b){ return String(b.id) === String(sb); });
+  }
+
+  var onlyDue = el("REP-ONLY-DUE") ? el("REP-ONLY-DUE").checked : true;
+
+  var cards = [];
   books.forEach(function(book){
     if(!book.qas) return;
     book.qas.forEach(function(qa, idx){
       var key = getCardKey(book.id, idx);
-      var card = sr[key];
-      var status = getCardStatus(card);
-      if(status === "new" || status === "today"){
-        dueCards.push({ q:qa.q, a:qa.a, key:key, bookName:book.name });
+      var status = getCardStatus(sr[key]);
+      if(!onlyDue || status === "new" || status === "today"){
+        cards.push({ q:qa.q, a:qa.a, key:key, bookName:book.name });
       }
     });
   });
 
-  if(!dueCards.length){
-    toast("Bugun takrorlash kerak bo'lgan savol yo'q! Ertaga keling 😊");
+  if(!cards.length){
+    toast(onlyDue ? "Tanlangan mavzularda bugun takrorlash kerak savol yo'q 😊" : "Tanlangan mavzularda savol yo'q");
     return;
   }
 
-  // Savollarni aralashtiramiz
-  dueCards.sort(function(){ return Math.random()-0.5; });
+  // Aralashtiramiz
+  cards.sort(function(){ return Math.random()-0.5; });
 
-  // Sessiya ekraniga o'tib yuklash
-  APP.qs = dueCards.map(function(c){
+  // Savollar sonini cheklash (qo'lda kiritilgan)
+  var cnt = el("REP-COUNT") ? parseInt(el("REP-COUNT").value, 10) : 0;
+  if(cnt && cnt > 0 && cnt < cards.length) cards = cards.slice(0, cnt);
+
+  APP.qs = cards.map(function(c){
     return { q:c.q, a:c.a, srKey:c.key, source:c.bookName };
   });
   APP.repeatMode = true;
   go("session");
   setTimeout(function(){
-    toast("Takrorlash: " + dueCards.length + " ta savol tayyor!");
+    var topicsTxt = selected.length ? (selected.length + " ta mavzu") : "barcha mavzular";
+    toast("Aralash takrorlash: " + APP.qs.length + " ta savol (" + topicsTxt + ")");
   }, 300);
 }
 
@@ -4367,10 +4488,169 @@ function finishHwDo(){
 }
 function closeHwDoModal(){ el("HW-DO-MOD").classList.remove("on"); APP.hwDo=null; }
 
+// ── GURUHLAR (GROUPS) ─────────────────────────────────────
+APP.groups = [];
+var GROUP_COLORS = ["#0C8FA6","#3B82F6","#16A34A","#F59E0B","#8B5CF6","#EC4899","#14B8A6","#EF4444"];
+function loadGroups(){
+  try { APP.groups = JSON.parse(localStorage.getItem("alc_bio_groups")||"[]"); }
+  catch(e){ APP.groups = []; }
+}
+function saveGroups(){ localStorage.setItem("alc_bio_groups", JSON.stringify(APP.groups)); }
+function groupNameById(id){
+  if(!id) return "";
+  var g = APP.groups.find(function(x){ return x.id===id; });
+  return g ? g.name : "";
+}
+function groupColor(id){
+  var i = APP.groups.findIndex(function(g){ return g.id===id; });
+  return GROUP_COLORS[(i<0?0:i) % GROUP_COLORS.length];
+}
+
+function toggleAddGroupForm(){
+  var f=el("ADD-GROUP-FORM"); if(!f) return;
+  var v=f.style.display!=="none";
+  f.style.display=v?"none":"block";
+  if(!v) setTimeout(function(){ var i=el("NEW-GROUP-INP"); if(i)i.focus(); },100);
+}
+function addGroup(){
+  var inp=el("NEW-GROUP-INP"); var name=inp?inp.value.trim():"";
+  if(!name){ toast("Guruh nomini kiriting!"); return; }
+  APP.groups.push({ id:Date.now(), name:name });
+  saveGroups();
+  if(inp) inp.value="";
+  var f=el("ADD-GROUP-FORM"); if(f) f.style.display="none";
+  renderGroups();
+  toast("Guruh qo'shildi: "+name);
+}
+function deleteGroup(id){
+  if(!confirm("Guruh o'chirilsinmi? O'quvchilar guruhsiz bo'lib qoladi.")) return;
+  APP.groups = APP.groups.filter(function(g){ return g.id!==id; });
+  APP.students.forEach(function(s){ if(s.groupId===id) s.groupId=null; });
+  saveGroups(); saveStudents();
+  renderGroups();
+  toast("Guruh o'chirildi");
+}
+function assignStudentGroup(sid, val){
+  var s=APP.students.find(function(x){ return x.id===sid; });
+  if(!s) return;
+  s.groupId = val ? parseInt(val,10) : null;
+  saveStudents();
+  renderGroups();
+}
+
+function renderGroups(){
+  var listEl=el("GR-LIST"); if(!listEl) return;
+  var grouped = APP.students.filter(function(s){ return s.groupId; });
+  var none = APP.students.filter(function(s){ return !s.groupId; });
+  if(el("GR-TOT")) el("GR-TOT").textContent = APP.groups.length;
+  if(el("GR-STU")) el("GR-STU").textContent = grouped.length;
+  if(el("GR-NONE")) el("GR-NONE").textContent = none.length;
+
+  var best=null;
+  APP.groups.forEach(function(g){
+    var mem=APP.students.filter(function(s){ return s.groupId===g.id; });
+    if(!mem.length) return;
+    var avg=Math.round(mem.reduce(function(a,s){ return a+s.avg; },0)/mem.length);
+    if(!best || avg>best.avg) best={ name:g.name, avg:avg };
+  });
+  if(el("GR-BEST")) el("GR-BEST").textContent = best ? best.avg+"%" : "—";
+
+  listEl.innerHTML="";
+  if(!APP.groups.length){
+    listEl.innerHTML="<div class=\"card\" style=\"text-align:center;padding:30px;color:var(--text3)\">Hali guruh yo'q. \"+ Guruh qo'shish\" tugmasi orqali yangi guruh oching.</div>";
+  } else {
+    APP.groups.forEach(function(g){
+      var mem=APP.students.filter(function(s){ return s.groupId===g.id; });
+      var avg=mem.length?Math.round(mem.reduce(function(a,s){ return a+s.avg; },0)/mem.length):0;
+      var ses=mem.reduce(function(a,s){ return a+(s.ses||0); },0);
+      var col=groupColor(g.id);
+      var card=document.createElement("div"); card.className="card"; card.style.cssText="margin-bottom:10px;border-left:4px solid "+col;
+      var memHtml = mem.length
+        ? mem.map(function(s){ return "<span class=\"badge\" style=\"background:var(--gray-100);color:var(--text2)\">"+s.name+" · "+s.avg+"%</span>"; }).join(" ")
+        : "<span style=\"font-size:12px;color:var(--text3)\">A'zo yo'q</span>";
+      card.innerHTML =
+        "<div style=\"display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px\">"+
+          "<div style=\"display:flex;align-items:center;gap:10px\">"+
+            "<span style=\"width:12px;height:12px;border-radius:50%;background:"+col+";display:inline-block\"></span>"+
+            "<span style=\"font-size:15px;font-weight:700\">"+g.name+"</span>"+
+            "<span class=\"badge badge-cyan\">"+mem.length+" o'quvchi</span>"+
+          "</div>"+
+          "<div style=\"display:flex;align-items:center;gap:10px\">"+
+            "<span style=\"font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:"+col+"\">"+avg+"%</span>"+
+            "<span style=\"font-size:12px;color:var(--text3)\">📚 "+ses+" sessiya</span>"+
+          "</div>"+
+        "</div>"+
+        "<div style=\"display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px\">"+memHtml+"</div>";
+      var del=document.createElement("button"); del.className="btn btn-danger"; del.style.cssText="font-size:11px;padding:5px 10px"; del.textContent="🗑 Guruhni o'chirish";
+      (function(gid){ del.onclick=function(){ deleteGroup(gid); }; })(g.id);
+      card.appendChild(del);
+      listEl.appendChild(card);
+    });
+  }
+  renderGroupAssign();
+}
+
+function renderGroupAssign(){
+  var wrap=el("GR-ASSIGN"); if(!wrap) return;
+  if(!APP.students.length){
+    wrap.innerHTML="<div style=\"font-size:13px;color:var(--text3)\">O'quvchilar yo'q. Avval \"O'quvchilar\" bo'limidan o'quvchi qo'shing.</div>";
+    return;
+  }
+  var html="";
+  APP.students.forEach(function(s){
+    var opts="<option value=\"\">— Guruhsiz —</option>";
+    APP.groups.forEach(function(g){
+      opts+="<option value=\""+g.id+"\""+(s.groupId===g.id?" selected":"")+">"+g.name+"</option>";
+    });
+    html+="<div style=\"display:flex;align-items:center;gap:12px;padding:9px 4px;border-bottom:1px solid var(--border)\">"+
+      "<div class=\"stu-av "+s.av+"\" style=\"width:34px;height:34px;font-size:12px\">"+s.ini+"</div>"+
+      "<div style=\"flex:1;font-size:13px;font-weight:600\">"+s.name+" <span style=\"font-size:11px;color:var(--text3);font-weight:500\">· "+(s.sinf||"")+"</span></div>"+
+      "<select style=\"width:180px\" onchange=\"assignStudentGroup("+s.id+", this.value)\">"+opts+"</select>"+
+      "</div>";
+  });
+  wrap.innerHTML=html;
+}
+
+// Natijalar paneli uchun guruhlar statistikasi
+function renderGroupStats(){
+  var wrap=el("RES-GROUPS"); if(!wrap) return;
+  wrap.innerHTML="";
+  if(!APP.groups.length) return;
+
+  var buckets=[];
+  APP.groups.forEach(function(g){
+    buckets.push({ name:g.name, color:groupColor(g.id), mem:APP.students.filter(function(s){ return s.groupId===g.id; }) });
+  });
+  var none=APP.students.filter(function(s){ return !s.groupId; });
+  if(none.length) buckets.push({ name:"Guruhsiz", color:"#9AA6B6", mem:none });
+
+  var sec=document.createElement("div");
+  sec.innerHTML="<div style=\"font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;margin-bottom:12px\">👥 Guruhlar bo'yicha statistika</div>";
+  var grid=document.createElement("div"); grid.className="ga";
+  buckets.forEach(function(b){
+    var avg=b.mem.length?Math.round(b.mem.reduce(function(a,s){ return a+s.avg; },0)/b.mem.length):0;
+    var ses=b.mem.reduce(function(a,s){ return a+(s.ses||0); },0);
+    var top=b.mem.slice().sort(function(a,c){ return c.avg-a.avg; })[0];
+    var card=document.createElement("div"); card.className="card"; card.style.cssText="border-top:4px solid "+b.color+";margin-bottom:0";
+    card.innerHTML =
+      "<div style=\"font-size:14px;font-weight:700;margin-bottom:8px\">"+b.name+"</div>"+
+      "<div style=\"display:flex;align-items:baseline;gap:6px;margin-bottom:8px\"><span style=\"font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;color:"+b.color+"\">"+avg+"%</span><span style=\"font-size:12px;color:var(--text3)\">o'rtacha</span></div>"+
+      "<div class=\"pbar\" style=\"height:6px;margin-bottom:12px\"><div class=\"pfill\" style=\"width:"+avg+"%;background:"+b.color+"\"></div></div>"+
+      "<div style=\"display:flex;justify-content:space-between;font-size:12px;color:var(--text2)\"><span>👥 "+b.mem.length+" o'quvchi</span><span>📚 "+ses+" sessiya</span></div>"+
+      (top?"<div style=\"font-size:12px;color:var(--text3);margin-top:6px\">🏆 Yetakchi: <b style=\"color:var(--text)\">"+top.name+"</b> ("+top.avg+"%)</div>":"");
+    grid.appendChild(card);
+  });
+  sec.appendChild(grid);
+  var divr=document.createElement("div"); divr.style.cssText="height:1px;background:var(--border);margin:18px 0";
+  sec.appendChild(divr);
+  wrap.appendChild(sec);
+}
+
 // ── INIT ──────────────────────────────────────────────────
 loadStudents();
 loadLibrary();
 loadHomework();
+loadGroups();
 initQA(); renderStudents(); renderVids("all");
 updateHwBadge();
 
