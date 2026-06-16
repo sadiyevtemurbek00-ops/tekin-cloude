@@ -1690,6 +1690,27 @@ body.dark .bg-deco span { opacity: .08; }
   </div>
 </div>
 
+<!-- O'QUVCHI PROFILI DETAL MODAL (mavzular / testlar diagrammasi) -->
+<div class="modal" id="STU-DETAIL-MOD">
+  <div class="modal-box" style="max-width:640px;max-height:92vh;overflow-y:auto">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px">
+      <div>
+        <div id="STU-DETAIL-NAME" style="font-size:17px;font-weight:700">O'quvchi</div>
+        <div id="STU-DETAIL-SUB" style="font-size:12px;color:var(--text3);margin-top:2px"></div>
+      </div>
+      <button class="btn btn-secondary" onclick="closeStuDetail()" style="flex-shrink:0">&#10005; Yopish</button>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px">&#128202; Mavzular kesimida o'zlashtirish</div>
+    <div style="position:relative;height:240px;margin-bottom:6px"><canvas id="STU-TOPIC-CHART"></canvas></div>
+    <div id="STU-TOPIC-EMPTY" style="display:none;text-align:center;padding:18px;color:var(--text3);font-size:13px">Bu o'quvchi uchun dars sessiyalari hali yo'q</div>
+    <div class="divider"></div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px">&#128221; Testlar kesimida natijalar</div>
+    <div style="position:relative;height:240px;margin-bottom:6px"><canvas id="STU-TEST-CHART"></canvas></div>
+    <div id="STU-TEST-EMPTY" style="display:none;text-align:center;padding:18px;color:var(--text3);font-size:13px">Bu o'quvchi uchun test natijalari hali yo'q</div>
+  </div>
+</div>
+
 
 <script>
 // ── LOGO ──────────────────────────────────────────────────
@@ -1819,6 +1840,7 @@ function doStartSession(){
   if(APP.autoAI===undefined) APP.autoAI=false;
   APP.autoTimer=null; refreshAutoBtn();
   el("SESS-STATUS").textContent = "Faol";
+  primeMic(); // Mikrofon ruxsatini sessiya boshida BIR MARTA olamiz (Edge: har savolda qayta so'ramaslik uchun)
   if(APP.adaptive) adaptOrder(0);
   loadQ(0); updScore();
   toast("Sessiya boshlandi: " + (APP.currentStu ? APP.currentStu.name : ""));
@@ -2724,6 +2746,8 @@ function renderStudents(){
     sc.appendChild(sv); sc.appendChild(bdg);
 
     d.appendChild(av); d.appendChild(info); d.appendChild(sc);
+    d.style.cursor = "pointer";
+    (function(sid){ d.onclick = function(){ openStudentDetail(sid); }; })(s.id);
     // Tarix tugmasi
     var histBtn = document.createElement("button");
     histBtn.className="btn btn-secondary"; histBtn.style.cssText="font-size:11px;padding:5px 10px;margin-left:8px";
@@ -2816,6 +2840,64 @@ function renderChart(sortedList){
       plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+"%";}}}},
       scales:{y:{min:0,max:100,grid:{color:"var(--gray-100)"},ticks:{callback:function(v){return v+"%";},font:{family:"Inter",size:11}}},x:{grid:{display:false},ticks:{font:{family:"Inter",size:11,weight:"600"}}}}
     }
+  });
+}
+
+// ── O'QUVCHI PROFILI: MAVZULAR / TESTLAR DIAGRAMMALARI ────
+var STU_TOPIC_CHART=null, STU_TEST_CHART=null;
+function stuPointColors(arr){ return arr.map(function(v){ return v>=86?"#10B981":v>=70?"#F59E0B":"#EF4444"; }); }
+function openStudentDetail(id){
+  var s = APP.students.find(function(x){ return x.id===id; });
+  if(!s) return;
+  el("STU-DETAIL-NAME").textContent = s.name;
+  el("STU-DETAIL-SUB").textContent = (s.sinf?s.sinf+" \u00B7 ":"") + "O'rtacha: " + s.avg + "% \u00B7 " + (s.ses||0) + " ta sessiya";
+  el("STU-DETAIL-MOD").classList.add("on");
+  setTimeout(function(){ renderStuTopicChart(id); renderStuTestChart(id); }, 90);
+}
+function closeStuDetail(){
+  el("STU-DETAIL-MOD").classList.remove("on");
+  if(STU_TOPIC_CHART){ STU_TOPIC_CHART.destroy(); STU_TOPIC_CHART=null; }
+  if(STU_TEST_CHART){ STU_TEST_CHART.destroy(); STU_TEST_CHART=null; }
+}
+function renderStuTopicChart(id){
+  var canvas = el("STU-TOPIC-CHART"); if(!canvas || !window.Chart) return;
+  var empty = el("STU-TOPIC-EMPTY");
+  var history = loadHistory().filter(function(h){ return String(h.studentId)===String(id); });
+  var map = {};
+  history.forEach(function(h){ var t=h.topic||"Noaniq"; if(!map[t]) map[t]={sum:0,cnt:0}; map[t].sum+=h.pct; map[t].cnt++; });
+  var topics = Object.keys(map);
+  if(STU_TOPIC_CHART){ STU_TOPIC_CHART.destroy(); STU_TOPIC_CHART=null; }
+  if(!topics.length){ if(empty) empty.style.display="block"; canvas.style.display="none"; return; }
+  if(empty) empty.style.display="none"; canvas.style.display="block";
+  var data = topics.map(function(t){ return Math.round(map[t].sum/map[t].cnt); });
+  STU_TOPIC_CHART = new Chart(canvas, {
+    type:"line",
+    data:{ labels:topics, datasets:[{ label:"O'zlashtirish %", data:data, borderColor:"#0C8FA6", backgroundColor:"rgba(12,143,166,.12)", borderWidth:2.5, pointRadius:6, pointHoverRadius:8, pointBackgroundColor:stuPointColors(data), fill:true, tension:0.3 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+"%";}}}}, scales:{ y:{min:0,max:100,grid:{color:"var(--gray-100)"},ticks:{callback:function(v){return v+"%";}}}, x:{grid:{display:false},ticks:{maxRotation:30,font:{size:10}}} } }
+  });
+}
+function renderStuTestChart(id){
+  var canvas = el("STU-TEST-CHART"); if(!canvas || !window.Chart) return;
+  var empty = el("STU-TEST-EMPTY");
+  var tests = loadTestResults();
+  var pts = [];
+  tests.slice().reverse().forEach(function(t){
+    var r = (t.results||[]).find(function(x){ return String(x.studentId)===String(id); });
+    if(r){
+      var total = (r.openTotal||0)+(r.writtenTotal||0);
+      var got = (r.openGot||0)+(r.writtenGot||0);
+      var pct = total>0?Math.round(got/total*100):0;
+      pts.push({ label:(t.topic||t.date||"Test"), pct:pct });
+    }
+  });
+  if(STU_TEST_CHART){ STU_TEST_CHART.destroy(); STU_TEST_CHART=null; }
+  if(!pts.length){ if(empty) empty.style.display="block"; canvas.style.display="none"; return; }
+  if(empty) empty.style.display="none"; canvas.style.display="block";
+  var data = pts.map(function(p){ return p.pct; });
+  STU_TEST_CHART = new Chart(canvas, {
+    type:"line",
+    data:{ labels:pts.map(function(p){return p.label;}), datasets:[{ label:"Test natijasi %", data:data, borderColor:"#3B82F6", backgroundColor:"rgba(59,130,246,.12)", borderWidth:2.5, pointRadius:6, pointHoverRadius:8, pointBackgroundColor:stuPointColors(data), fill:true, tension:0.3 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y+"%";}}}}, scales:{ y:{min:0,max:100,grid:{color:"var(--gray-100)"},ticks:{callback:function(v){return v+"%";}}}, x:{grid:{display:false},ticks:{maxRotation:30,font:{size:10}}} } }
   });
 }
 
@@ -3100,6 +3182,21 @@ function pdfLogo(doc, x, y, size){
   return false;
 }
 
+// PDF hisobot pastiga muallif/kontakt blokini qo'shadi (barcha PDF hisobotlar uchun)
+function pdfAuthorBlock(doc, y){
+  if(typeof y !== "number" || isNaN(y)) y = 262;
+  if(y > 256){ doc.addPage(); y = 24; }
+  doc.setDrawColor(226,232,240); doc.setLineWidth(0.4);
+  doc.line(14, y, 196, y); y += 8;
+  doc.setTextColor(12,143,166); doc.setFont("helvetica","bold"); doc.setFontSize(10);
+  doc.text("Ilova muallifi va biolog o'qituvchi: Sadiyev Temurbek", 14, y); y += 6;
+  doc.setTextColor(60,60,60); doc.setFont("helvetica","normal"); doc.setFontSize(9);
+  doc.text("Murojaat uchun telefon: +998-88-585-80-44", 14, y); y += 7;
+  doc.setTextColor(245,158,11); doc.setFont("helvetica","bold"); doc.setFontSize(10);
+  doc.text("\"Biz bilan bilimga ega bo'ling!\"", 14, y); y += 4;
+  return y;
+}
+
 // jsPDF mavjudligini ta'minlash (kerak bo'lsa CDN dan qayta yuklaydi)
 async function ensureJsPDF(){
   if(getJsPDF()) return getJsPDF();
@@ -3220,6 +3317,9 @@ async function exportPDF(){
         y+=1.5;
       });
     }
+
+    // Muallif / kontakt bloki
+    pdfAuthorBlock(doc, (typeof y === "number" ? y + 6 : 262));
 
     // Footer
     var pc=doc.getNumberOfPages();
@@ -4140,6 +4240,7 @@ async function exportStudentsPDF(){
       doc.text(grade,168,y);
       y += 7;
     });
+    pdfAuthorBlock(doc, y + 4);
     doc.save("oquvchilar_"+new Date().toISOString().split("T")[0]+".pdf");
     toast("PDF yuklab olindi");
     var pfname = "oquvchilar_"+new Date().toISOString().split("T")[0]+".pdf";
@@ -4246,6 +4347,7 @@ async function exportTestsPDF(){
     doc.setTextColor(30,30,30); doc.setFontSize(10); doc.setFont("helvetica","bold");
     doc.text("O'rtacha: "+avg+"%    Eng yuqori: "+Math.max.apply(null,totals)+"%    Eng past: "+Math.min.apply(null,totals)+"%",14,y);
 
+    pdfAuthorBlock(doc, y + 8);
     doc.save("test_natijalari_"+(d.date||new Date().toISOString().split("T")[0])+".pdf");
     toast("PDF yuklab olindi");
     var tpfname = "test_natijalari_"+(d.date||new Date().toISOString().split("T")[0])+".pdf";
